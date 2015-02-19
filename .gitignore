@@ -1,0 +1,7 @@
+.depend
+*.swp
+*.o
+*.json
+*.pyc
+gmon.out
+evol
