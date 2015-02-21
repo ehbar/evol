@@ -14,9 +14,7 @@
 namespace evol {
 
 
-int32_t Coord::min_x_ = 0;
 int32_t Coord::max_x_ = 1;
-int32_t Coord::min_y_ = 0;
 int32_t Coord::max_y_ = 1;
 
 

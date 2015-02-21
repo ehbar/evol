@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
   std::vector<std::thread> engine_threads(numCores);
   Asteroid asteroid(Params::kAsteroidSize);
 
-  Coord::SetGlobalBounds(0, Params::kWidth, 0, Params::kHeight);
+  Coord::SetGlobalBounds(Params::kWidth, Params::kHeight);
 
   for (unsigned i = 0; i < numCores; ++i) {
     engines[i] = EvolEngine(Params::kWidth, Params::kHeight, &asteroid);

@@ -28,11 +28,8 @@ class Coord {
    * this doesn't affect existing Coord objects, this is normally done at
    * runtime init and never changed again.
    */
-  static void SetGlobalBounds(int32_t min_x, int32_t max_x, int32_t min_y,
-                              int32_t max_y) {
-    Coord::min_x_ = min_x;
+  static void SetGlobalBounds(int32_t max_x, int32_t max_y) {
     Coord::max_x_ = max_x;
-    Coord::min_y_ = min_y;
     Coord::max_y_ = max_y;
   }
 
@@ -61,28 +58,23 @@ class Coord {
    * Wraps the coordinate inside the boundary box.
    */
   void Normalize() {
-    int32_t width = Coord::max_x_ - Coord::min_x_;
-    int32_t height = Coord::max_y_ - Coord::min_y_;
-
     // TODO: Do the math for these instead of naively looping
-    while (x < Coord::min_x_) {
-      x += width;
+    while (x < 0) {
+      x += Coord::max_x_;
     }
     while (x >= Coord::max_x_) {
-      x -= width;
+      x -= Coord::max_x_;
     }
-    while (y < Coord::min_y_) {
-      y += height;
+    while (y < 0) {
+      y += Coord::max_y_;
     }
     while (y >= Coord::max_y_) {
-      y -= height;
+      y -= Coord::max_y_;
     }
   }
 
  private:
-  static int32_t min_x_;
   static int32_t max_x_;
-  static int32_t min_y_;
   static int32_t max_y_;
 
 };

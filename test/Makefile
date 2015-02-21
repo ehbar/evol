@@ -7,7 +7,7 @@
 GTEST_PATH=/Users/eric/gtest
 
 CPPFLAGS=-Wall -std=c++11 -g -I.. -I${GTEST_PATH}/include
-LDFLAGS=-L${GTEST_PATH} -lgtest
+LDFLAGS=-L.. -L${GTEST_PATH} -lgtest -levol
 SRCS=TestMain.cc CoordTest.cc
 OBJS=TestMain.o CoordTest.o
 CXX=clang++

@@ -10,7 +10,7 @@
 #ifndef EVOL_LIFEFORM_JSON_H_
 #define EVOL_LIFEFORM_JSON_H_
 
-#include <json/json.h>
+#include <json-c/json.h>
 #include <unistd.h>
 
 #include <memory>

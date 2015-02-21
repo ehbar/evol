@@ -5,4 +5,5 @@
 *.pyc
 gmon.out
 evol
+libevol.a
 evol-test
