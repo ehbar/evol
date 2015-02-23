@@ -17,6 +17,8 @@ LIB=libevol.a
 $(BIN): $(LIB)
 	$(CXX) $(CPPFLAGS) Main.cc -o $(BIN) $(LDFLAGS)
 
+lib: $(LIB)
+
 $(LIB): $(OBJS)
 	ar -r $(LIB) $(OBJS)
 

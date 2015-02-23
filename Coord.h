@@ -58,18 +58,15 @@ class Coord {
    * Wraps the coordinate inside the boundary box.
    */
   void Normalize() {
-    // TODO: Do the math for these instead of naively looping
-    while (x < 0) {
-      x += Coord::max_x_;
+    if (x < 0) {
+      x = x % Coord::max_x_ + Coord::max_x_;
+    } else if (x >= Coord::max_x_) {
+      x = x % Coord::max_x_;
     }
-    while (x >= Coord::max_x_) {
-      x -= Coord::max_x_;
-    }
-    while (y < 0) {
-      y += Coord::max_y_;
-    }
-    while (y >= Coord::max_y_) {
-      y -= Coord::max_y_;
+    if (y < 0) {
+      y = y % Coord::max_y_ + Coord::max_y_;
+    } else if (y >= Coord::max_x_) {
+      y = y % Coord::max_y_;
     }
   }
 

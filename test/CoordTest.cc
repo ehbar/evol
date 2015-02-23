@@ -27,8 +27,6 @@ class CoordTest : public ::testing::Test {
   }
 
   // virtual void TearDown() {}
-
-  Coord c1;
 };
 
 
@@ -40,26 +38,53 @@ TEST_F(CoordTest, StartsAtZero) {
 }
 
 
-TEST_F(CoordTest, HoldsMaxValues) {
-  c1 = Coord(kMaxWidth - 1, kMaxHeight - 1);
-  EXPECT_EQ(kMaxWidth - 1, c1.x);
-  EXPECT_EQ(kMaxHeight - 1, c1.y);
+TEST_F(CoordTest, HoldsMaxAndMinValues) {
+  Coord c(kMaxWidth - 1, kMaxHeight - 1);
+
+  EXPECT_EQ(kMaxWidth - 1, c.x);
+  EXPECT_EQ(kMaxHeight - 1, c.y);
+
+  c = Coord(0, 0);
+  EXPECT_EQ(0, c.x);
+  EXPECT_EQ(0, c.y);
 }
 
 
 TEST_F(CoordTest, WrapsMaxValues) {
-  c1 = Coord(kMaxWidth, kMaxHeight);
-  c1.Normalize();
-  EXPECT_EQ(0, c1.x);
-  EXPECT_EQ(0, c1.y);
+  Coord ca(kMaxWidth, kMaxHeight);
+  EXPECT_EQ(0, ca.x);
+  EXPECT_EQ(0, ca.y);
 
-  c1 = Coord(kMaxWidth + 1, kMaxHeight + 1);
-  c1.Normalize();
-  EXPECT_EQ(1, c1.x);
-  EXPECT_EQ(1, c1.y);
+  Coord cb(kMaxWidth + 1, kMaxHeight + 1);
+  EXPECT_EQ(1, cb.x);
+  EXPECT_EQ(1, cb.y);
 
-  c1 = Coord(-1, -1);
-  c1.Normalize();
-  EXPECT_EQ(kMaxWidth - 1, c1.x);
-  EXPECT_EQ(kMaxHeight - 1, c1.y);
+  Coord cc(-1, -1);
+  EXPECT_EQ(kMaxWidth - 1, cc.x);
+  EXPECT_EQ(kMaxHeight - 1, cc.y);
+
+  Coord cd(-2, -3);
+  EXPECT_EQ(kMaxWidth - 2, cd.x);
+  EXPECT_EQ(kMaxHeight - 3, cd.y);
+}
+
+
+TEST_F(CoordTest, Directions) {
+  Coord c;
+
+  Coord cn = c.North();
+  EXPECT_EQ(0, cn.x);
+  EXPECT_EQ(kMaxHeight - 1, cn.y);
+
+  Coord cs = c.South();
+  EXPECT_EQ(0, cs.x);
+  EXPECT_EQ(1, cs.y);
+
+  Coord ce = c.East();
+  EXPECT_EQ(1, ce.x);
+  EXPECT_EQ(0, ce.y);
+
+  Coord cw = c.West();
+  EXPECT_EQ(kMaxWidth - 1, cw.x);
+  EXPECT_EQ(0, cw.y);
 }
