@@ -10,20 +10,25 @@ CPPFLAGS=-Wall -std=c++11 -g -I.. -I${GTEST_PATH}/include
 LDFLAGS=-L.. -L${GTEST_PATH} -lgtest -levol
 SRCS=TestMain.cc CoordTest.cc
 OBJS=TestMain.o CoordTest.o
+LIB=../libevol.a
 CXX=clang++
 BIN=evol-test
 
+.PHONY: test clean distclean
 
-$(BIN): $(OBJS)
+$(BIN): $(OBJS) $(LIB)
 	$(CXX) $(INC) $(CPPFLAGS) -o $(BIN) $(OBJS) $(LDFLAGS)
 
-include .depend
+$(LIB):
+	$(MAKE) -C .. lib
 
-dep: .depend
+include .depend
 
 .depend: $(SRCS)
 	rm -fv ./.depend
 	$(CXX) $(CPPFLAGS) $(CFLAGS) -MM $^ > ./.depend
+
+test: $(BIN)
 
 clean:
 	rm -fv $(BIN) $(OBJS)

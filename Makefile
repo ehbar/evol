@@ -7,31 +7,40 @@
 #CPPFLAGS=-Wall -std=c++11 -g
 CPPFLAGS=-Wall -std=c++11 -O3 -fno-rtti -fno-exceptions
 LDFLAGS=-L. -levol -lncurses -ljson-c -lpthread
-SRCS=Arena.cc Coord.cc CursesRenderer.cc EvolEngine.cc Dumper.cc Lifeform.cc Random.cc Types.cc
-OBJS=Arena.o Coord.o CursesRenderer.o EvolEngine.o Dumper.o Lifeform.o Random.o Types.o
 CXX=clang++
+SRCS=Arena.cc Coord.cc CursesRenderer.cc EvolEngine.cc Dumper.cc Lifeform.cc Main.cc Random.cc Types.cc
+LIBOBJS=Arena.o Coord.o CursesRenderer.o EvolEngine.o Dumper.o Lifeform.o Random.o Types.o
+OBJS=$(LIBOBJS) Main.o
+
 BIN=evol
 LIB=libevol.a
 
+.PHONY: bin lib clean distclean test
 
-$(BIN): $(LIB)
+$(BIN): $(LIB) .depend
 	$(CXX) $(CPPFLAGS) Main.cc -o $(BIN) $(LDFLAGS)
+
+$(LIB): $(LIBOBJS)
+	ar -r $(LIB) $(LIBOBJS)
+
+bin: $(BIN)
 
 lib: $(LIB)
 
-$(LIB): $(OBJS)
-	ar -r $(LIB) $(OBJS)
+.depend: $(SRCS)
+	$(CXX) $(CPPFLAGS) $(CFLAGS) -MM $^ > ./.depend
 
 include .depend
 
-dep: .depend
+test/evol-test: $(LIB)
+	$(MAKE) -C test
 
-.depend: $(SRCS)
-	rm -fv ./.depend
-	$(CXX) $(CPPFLAGS) $(CFLAGS) -MM $^ > ./.depend
+test: test/evol-test
+	test/evol-test
 
 clean:
-	rm -fv $(BIN) $(LIB) $(OBJS) gmon.out
+	rm -fv $(BIN) $(LIB) $(OBJS) Main.o gmon.out
 
 distclean: clean
 	rm -fv ./.depend
+	$(MAKE) -C test distclean
