@@ -20,7 +20,7 @@ namespace evol {
 
 class ArenaBlock {
  public:
-  ArenaBlock(int e = 1.0) : energy_(e) {}
+  ArenaBlock(int e = 1) : energy_(e) {}
 
   ArenaBlock(const ArenaBlock &) = delete;
 

@@ -42,7 +42,7 @@ class CursesRenderer {
   ~CursesRenderer() { Cleanup(); };
 
   CursesRenderer(const CursesRenderer &) = delete;
-  CursesRenderer(CursesRenderer &&) = delete;
+  CursesRenderer & operator=(const CursesRenderer &) = delete;
 
   void Init();
   void Run();

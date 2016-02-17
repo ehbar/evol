@@ -30,7 +30,7 @@ class Lifeform {
   }
 
   Lifeform(const Lifeform &) = delete;
-  Lifeform(Lifeform &&) = delete;
+  Lifeform & operator=(const Lifeform &) = delete;
 
   uint64_t Id() const { return id_; }
   uint64_t Gen() const { return gen_; }

@@ -46,7 +46,7 @@ class Timer {
   Timer(const std::string & desc) : description_(desc), sample_count_(0), sample_index_(0) {}
 
   Timer(const Timer &) = delete;
-  Timer(Timer &&) = delete;
+  Timer & operator=(const Timer &) = delete;
 
   void StartCollection() {
     if (gettimeofday(&start_, nullptr) < 0) {

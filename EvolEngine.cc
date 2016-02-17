@@ -132,6 +132,9 @@ EvolEngine::MapActions(const std::forward_list<Action> & actions) const {
 }
 
 
+/**
+ * Commit the resolved interactions of each lifeform.
+ */
 void EvolEngine::ResolveInteractions(ActionMap * interactions) {
   for (auto & elem : *interactions) {
     auto & coord = elem.first;
