@@ -67,7 +67,7 @@ class EvolEngine {
     return *this;
   }
 
-  explicit EvolEngine(const EvolEngine &) = delete;
+  EvolEngine(const EvolEngine &) = delete;
   EvolEngine & operator=(const EvolEngine & other) = delete;
 
   /**

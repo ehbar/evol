@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
     engines[i].DoExit();
   }
   dumper.JoinThread();
-  for (int i = 0; i < numCores; ++i) {
+  for (unsigned i = 0; i < numCores; ++i) {
     engine_threads[i].join();
   }
 

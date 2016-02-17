@@ -33,8 +33,8 @@ class Arena {
  public:
   Arena(int32_t w, int32_t h) : width_(w), height_(h), blocks_(w * h), dead_lifeforms_count_(0) {}
 
-  explicit Arena(const Arena &) = delete;
-  explicit Arena(Arena &&) = delete;
+  Arena(const Arena &) = delete;
+  Arena(Arena &&) = delete;
 
   int Width() const { return width_; }
   int Height() const { return height_; }

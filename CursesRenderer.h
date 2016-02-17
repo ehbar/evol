@@ -41,8 +41,8 @@ class CursesRenderer {
   }
   ~CursesRenderer() { Cleanup(); };
 
-  explicit CursesRenderer(const CursesRenderer &) = delete;
-  explicit CursesRenderer(CursesRenderer &&) = delete;
+  CursesRenderer(const CursesRenderer &) = delete;
+  CursesRenderer(CursesRenderer &&) = delete;
 
   void Init();
   void Run();

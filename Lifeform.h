@@ -29,8 +29,8 @@ class Lifeform {
     id_ = ++Lifeform::next_id_;
   }
 
-  explicit Lifeform(const Lifeform &) = delete;
-  explicit Lifeform(Lifeform &&) = delete;
+  Lifeform(const Lifeform &) = delete;
+  Lifeform(Lifeform &&) = delete;
 
   uint64_t Id() const { return id_; }
   uint64_t Gen() const { return gen_; }

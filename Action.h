@@ -23,7 +23,7 @@ namespace evol {
 struct Action {
  public:
   Action() : actor(nullptr), type(ActionType::NOTHING) {}
-  explicit Action(Lifeform * a, ActionType t) : actor(a), type(t) {}
+  Action(Lifeform * a, ActionType t) : actor(a), type(t) {}
 
   // Lifeform performing this action
   Lifeform * actor;
