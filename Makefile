@@ -4,12 +4,12 @@
 # This program is distributed under the terms of the GNU General Public
 # License Version 3.  See file `COPYING' for details.
 
-#CPPFLAGS=-Wall -std=c++11 -g -fno-rtti -fno-exceptions
-CPPFLAGS=-Wall -std=c++11 -O3 -fno-rtti -fno-exceptions
-LDFLAGS=-L. -ltinfo -lncurses -ljson-c -lpthread -levol
+CPPFLAGS=-I/usr/local/include -Wall -std=c++11 -g -fno-rtti -fno-exceptions
+#CPPFLAGS=-I/usr/local/include -Wall -std=c++11 -O3 -fno-rtti -fno-exceptions
+LDFLAGS=-L. -L/usr/local/lib -ltinfo -lncurses -ljson-c -lpthread -lsfml-window -lsfml-graphics -lsfml-system -levol
 CXX=g++
-SRCS=Arena.cc Coord.cc CursesRenderer.cc EvolEngine.cc Dumper.cc Lifeform.cc Main.cc Random.cc Types.cc
-LIBOBJS=Arena.o Coord.o CursesRenderer.o EvolEngine.o Dumper.o Lifeform.o Random.o Types.o
+SRCS=Arena.cc Coord.cc CursesRenderer.cc SFMLRenderer.cc EvolEngine.cc Dumper.cc Lifeform.cc Main.cc Random.cc Types.cc
+LIBOBJS=Arena.o Coord.o CursesRenderer.o SFMLRenderer.o EvolEngine.o Dumper.o Lifeform.o Random.o Types.o
 OBJS=$(LIBOBJS) Main.o
 
 BIN=evol

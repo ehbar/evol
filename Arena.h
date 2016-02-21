@@ -17,6 +17,7 @@
 
 #include "ArenaBlock.h"
 #include "Coord.h"
+#include "Grid.h"
 #include "Lifeform.h"
 #include "Random.h"
 
@@ -31,7 +32,11 @@ namespace evol {
  */
 class Arena {
  public:
-  Arena(int32_t w, int32_t h) : width_(w), height_(h), blocks_(w * h), dead_lifeforms_count_(0) {}
+  Arena(Unit w, Unit h) : width_(w), height_(h), dead_lifeforms_count_(0) {
+    assert(w > 0 && h > 0);
+    grid_.reset(new Grid<ArenaBlock>(w, h));
+    //MakeElevationMap();
+  }
 
   Arena(const Arena &) = delete;
   Arena & operator=(const Arena &) = delete;
@@ -63,7 +68,7 @@ class Arena {
 
   /**
    * Add the given lifeform at the given x/y coord.  This takes memory ownership
-   * of the lifeform, which must be passed in a unique_ptr container.
+   * of the lifeform.
    */
   void AddAndOwnLifeform(Lifeform * lf, const Coord & c);
 
@@ -75,7 +80,7 @@ class Arena {
   /**
    * Returns a count of Lifeforms at the given location.
    */
-  int32_t GetLifeformCount(const Coord &c) const;
+  size_t GetLifeformCount(const Coord &c) const;
 
   /**
    * Move the lifeform to the given location.
@@ -103,7 +108,12 @@ class Arena {
   /**
    * Return energy available at the given coordinate.
    */
-  float GetEnergy(const Coord &c) const;
+  Energy GetEnergy(const Coord &c) const;
+
+  /**
+   * Return elevation of the given coordinate.
+   */
+  Elevation GetElevation(const Coord &c) const;
 
   /**
    * Utility method: Return a coord guaranteed to be in the bounds of this arena
@@ -114,16 +124,16 @@ class Arena {
   }
 
  private:
-  int32_t width_;
-  int32_t height_;
+  Unit width_;
+  Unit height_;
 
-  // This is the master list of lifeforms.  Any reference to the lifeform will
-  // be broken (probably causing a crash or other badness) if it's removed from
-  // this list unless effort is made to retain the lifeform.
+  // This is the master list of lifeforms.  It is responsible for memory
+  // ownership.  Thus no pointers or references to the lifeform must remain if
+  // it is deleted from this list.
   std::list<std::unique_ptr<Lifeform>> lifeforms_;
 
   // Grid of ArenaBlocks representing the "physical" space.
-  std::vector<ArenaBlock> blocks_;
+  std::unique_ptr<Grid<ArenaBlock>> grid_;
 
   uint64_t dead_lifeforms_count_;
 };

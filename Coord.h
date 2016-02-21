@@ -7,20 +7,21 @@
  * License Version 3.  See file `COPYING' for details.
  */
 
-#ifndef EVOL_COORD_H_
-#define EVOL_COORD_H_
-
+#pragma once
 #include <cstdint>
 #include <functional>  // std::hash
 
 namespace evol {
 
 
+typedef int32_t Unit;
+
+
 // Cartesian coordinate with origin at 0, 0 and equality comparison.
 class Coord {
  public:
-  int32_t x;
-  int32_t y;
+  Unit x;
+  Unit y;
 
   /**
    * Set the bounding box of all Coord objects globally.  Newly set Coord
@@ -28,13 +29,13 @@ class Coord {
    * this doesn't affect existing Coord objects, this is normally done at
    * runtime init and never changed again.
    */
-  static void SetGlobalBounds(int32_t max_x, int32_t max_y) {
+  static void SetGlobalBounds(Unit max_x, Unit max_y) {
     Coord::max_x_ = max_x;
     Coord::max_y_ = max_y;
   }
 
   Coord() : x(0), y(0) {}
-  Coord(int32_t xx, int32_t yy) : x(xx), y(yy) {
+  Coord(Unit xx, Unit yy) : x(xx), y(yy) {
     Normalize();
   }
   Coord(const Coord & other) : x(other.x), y(other.y) {}
@@ -55,25 +56,31 @@ class Coord {
   Coord West() { return Coord(x - 1, y); }
 
   /**
-   * Wraps the coordinate inside the boundary box.
+   * Wraps the coordinate inside the global boundary box.
    */
   void Normalize() {
+    Normalize(max_x_, max_y_);
+  }
+
+  /**
+   * Wraps the coordinate inside the given boundary box.
+   */
+  void Normalize(Unit xMax, Unit yMax) {
     if (x < 0) {
-      x = x % Coord::max_x_ + Coord::max_x_;
+      x = x % xMax + xMax;
     } else if (x >= Coord::max_x_) {
-      x = x % Coord::max_x_;
+      x %= xMax;
     }
     if (y < 0) {
-      y = y % Coord::max_y_ + Coord::max_y_;
+      y = y % yMax + yMax;
     } else if (y >= Coord::max_x_) {
-      y = y % Coord::max_y_;
+      y %= yMax;
     }
   }
 
  private:
-  static int32_t max_x_;
-  static int32_t max_y_;
-
+  static Unit max_x_;
+  static Unit max_y_;
 };
 
 
@@ -82,6 +89,7 @@ namespace std {
 
 
 // Hash template specialization for Coord; allows use in maps etc.
+// TODO: Only reliable on 64-bit systems!  Should be fixed ASAP
 template <>
 struct hash<evol::Coord> {
   std::size_t operator()(const evol::Coord &c) const {
@@ -92,4 +100,3 @@ struct hash<evol::Coord> {
 
 
 }  // namespace std
-#endif  // EVOL_COORD_H_

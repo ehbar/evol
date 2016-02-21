@@ -10,6 +10,8 @@
 #pragma once
 #include <cstdint>
 #include <vector>
+#include <SFML/Graphics/RenderWindow.hpp>
+#include <SFML/Graphics/Font.hpp>
 
 #include "EvolEngine.h"
 #include "LifeformWatermarks.h"
@@ -18,30 +20,35 @@
 namespace evol {
 
 
-class CursesRenderer {
+class SFMLRenderer {
  public:
-  CursesRenderer(std::vector<EvolEngine> * engines = nullptr, Asteroid * asteroid = nullptr, int fps = 60)
+  SFMLRenderer(std::vector<EvolEngine> * engines = nullptr, Asteroid * asteroid = nullptr, int fps = 60)
       : target_fps_(fps),
         did_init_(false),
         engines_(engines),
         asteroid_(asteroid) {
     engine_stats_.resize(engines->size());
   }
-  ~CursesRenderer() { Cleanup(); };
+  ~SFMLRenderer() { Cleanup(); };
 
-  CursesRenderer(const CursesRenderer &) = delete;
-  CursesRenderer & operator=(const CursesRenderer &) = delete;
+  SFMLRenderer(const SFMLRenderer &) = delete;
+  SFMLRenderer & operator=(const SFMLRenderer &) = delete;
 
   void Init();
   void Run();
   void Cleanup();
 
  private:
+  // General state
   int target_fps_;
   bool did_init_;
   std::vector<EvolEngine> * engines_;
   std::vector<LifeformWatermarks> engine_stats_;
   Asteroid * asteroid_;
+
+  // SFML state
+  std::unique_ptr<sf::RenderWindow> sfWindow_;
+  std::unique_ptr<sf::Font> sfFont_;
 
   void RenderFrame(const Timer *);
 };

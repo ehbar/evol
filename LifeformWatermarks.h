@@ -7,15 +7,20 @@
  * License Version 3.  See file `COPYING' for details.
  */
 
-#include "Coord.h"
-
+#pragma once
 #include <cstdint>
 
 namespace evol {
 
 
-Unit Coord::max_x_ = 1;
-Unit Coord::max_y_ = 1;
+struct LifeformWatermarks {
+  LifeformWatermarks()
+      : lifeforms_count_lowater(UINT64_MAX),
+        lifeforms_count_hiwater(0) {}
+
+  uint64_t lifeforms_count_lowater;
+  uint64_t lifeforms_count_hiwater;
+};
 
 
 }  // namespace evol

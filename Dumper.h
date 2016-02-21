@@ -21,16 +21,20 @@
 #include "EvolEngine.h"
 #include "LifeformJson.h"
 
-
 namespace evol {
 
 
 class Dumper {
  public:
   Dumper(std::vector<EvolEngine> * engines = nullptr, time_t interval = 30)
-      : engines_(engines),
-        dump_interval_secs_(interval),
-        do_exit_(false) {}
+        : engines_(engines), dump_interval_secs_(interval), do_exit_(false) {
+    // Build a lock for each engine
+    engine_locks_.resize(engines_->size());
+    for (unsigned i = 0; i < engines_->size(); ++i) {
+      EvolEngine & e = (*engines_)[i];
+      engine_locks_[i] = std::unique_lock<std::mutex>(*(e.GetVolatileMutex()), std::defer_lock);
+    }
+  }
 
   /**
    * Start the Dumper thread.  Returns after launching it.
@@ -41,6 +45,9 @@ class Dumper {
     thread_ = std::thread(&Dumper::DumpLoop, this);
   }
 
+  /**
+   * Tell Dumper thread to exit gracefully.
+   */
   void DoExit() {
     {
       std::lock_guard<std::mutex> lg(do_exit_mutex_);
@@ -49,12 +56,20 @@ class Dumper {
     do_exit_cv_.notify_all();
   }
 
+  /**
+   * Joins Dumper thread; call after DoExit() to ensure last data dump is
+   * finished.
+   */
   void JoinThread() {
     if (thread_.joinable()) {
       thread_.join();
     }
   }
 
+  /**
+   * Sleeps dump_interval_secs_ waiting for do_exit_ to be set.  Returns
+   * do_exit_ status.
+   */
   bool DidGetExitAfterDelay() {
     std::unique_lock<std::mutex> lk(do_exit_mutex_);
     auto now = std::chrono::system_clock::now();
@@ -70,14 +85,20 @@ class Dumper {
   void DumpLoop();
 
  private:
+  void DumpAllEngines();
+
+  // Engine hooks
   std::vector<EvolEngine> * engines_;
+  std::vector<std::unique_lock<std::mutex>> engine_locks_;
+
+  // Misc runtime state
   time_t dump_interval_secs_;
   bool do_exit_;
   std::mutex do_exit_mutex_;
   std::condition_variable do_exit_cv_;
   std::thread thread_;
+  std::unique_ptr<char[]> filename_;
 };
-
 
 
 }  // namespace evol

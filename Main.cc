@@ -11,7 +11,8 @@
 #include <thread>
 
 #include "Asteroid.h"
-#include "CursesRenderer.h"
+//#include "CursesRenderer.h"
+#include "SFMLRenderer.h"
 #include "EvolEngine.h"
 #include "Dumper.h"
 #include "Params.h"
@@ -46,7 +47,8 @@ int main(int argc, char *argv[]) {
   dumper.Start();
 
   // Renderer thread; this updates the screen and waits for user quit
-  CursesRenderer renderer(&engines, &asteroid, 30);
+  //CursesRenderer renderer(&engines, &asteroid, 30);
+  SFMLRenderer renderer(&engines, &asteroid, 30);
   renderer.Init();
   renderer.Run();
 

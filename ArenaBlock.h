@@ -18,23 +18,39 @@
 namespace evol {
 
 
+typedef float Energy;
+typedef int16_t Elevation;
+
+
 class ArenaBlock {
  public:
-  ArenaBlock(int e = 1) : energy_(e) {}
-
-  ArenaBlock(const ArenaBlock &) = delete;
+  ArenaBlock(Energy en = 1.0f, Elevation el = 0) : energy_(en), elevation_(el) {}
 
   ArenaBlock(ArenaBlock && other) {
     energy_ = other.energy_;
-    other.energy_ = 1;
+    elevation_ = other.elevation_;
     lifeforms_ = std::move(other.lifeforms_);
   }
 
+  // Delete clone & assign constructors because it's not obvious how we'd handle
+  // the list of occupant lifeforms in the source ArenaBlock
+  ArenaBlock(const ArenaBlock &) = delete;
   ArenaBlock & operator=(const ArenaBlock &other) = delete;
 
-  float GetEnergy() const { return energy_; }
-  void SetEnergy(float new_energy) {
+  /**
+   * Get and set Energy value of the block
+   */
+  Energy GetEnergy() const { return energy_; }
+  void SetEnergy(Energy new_energy) {
     energy_ = new_energy;
+  }
+
+  /**
+   * Get and set Elevation value of the block
+   */
+  Elevation GetElevation() const { return elevation_; }
+  void SetElevation(Elevation new_elevation) {
+    elevation_ = new_elevation;
   }
 
   /**
@@ -76,7 +92,8 @@ class ArenaBlock {
   }
 
  private:
-  float energy_;
+  Energy energy_;
+  Elevation elevation_;
   std::list<Lifeform *> lifeforms_;
 };
 

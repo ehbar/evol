@@ -49,7 +49,7 @@ class EvolEngine {
     if (!do_exit_)
       abort();  // never overwrite a running engine!!
 
-    // Take on value of their do_exit_ and leave it set to true
+    // Take on value of their do_exit_ and leave theirs set to true
     do_exit_ = other.do_exit_.exchange(true);
 
     std::lock(volatile_mutex_, other.volatile_mutex_);

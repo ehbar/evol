@@ -73,9 +73,6 @@ void EvolEngine::Run() {
     KillStarvedLifeforms();
     SplitFatLifeforms();
 
-    // End main loop timer
-    loop_timer.EndCollection();
-
     // Blast a lifeform off into outer space!  (Actually another engine)
     if (Params::kLifeformAsteroidLaunchInterval != 0 && turns_ % Params::kLifeformAsteroidLaunchInterval == 0) {
       asteroid_->LaunchLifeform(arena_->RemoveRandomLifeform());
@@ -89,6 +86,9 @@ void EvolEngine::Run() {
         arena_->AddAndOwnLifeform(lf.release(), c);
       }
     }
+
+    // End main loop timer
+    loop_timer.EndCollection();
 
     vl.unlock();  // No more changes to arena & lifeforms during this loop iteration
     ++turns_;
