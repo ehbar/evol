@@ -1,7 +1,7 @@
 /*
  * Evol: The non-life evolution simulator.
  *
- * Copyright 2014-2015 Eric Barrett <arctil@gmail.com>.
+ * Copyright 2014-2017 Eric Barrett <arctil@gmail.com>.
  *
  * This program is distributed under the terms of the GNU General Public
  * License Version 3.  See file `COPYING' for details.
@@ -64,13 +64,15 @@ enum class OpCode : OpcodeBasicType {
   FINAL_MOVE_EAST,
   FINAL_MOVE_SOUTH,
   FINAL_MOVE_WEST,
-  FINAL_MOVE_RANDOM
+  FINAL_MOVE_RANDOM,
+
+  END  // must always be last
 };
 
 
 // Define the range of opcodes for random generation
 const int32_t kOpcodeBegin = static_cast<int32_t>(OpCode::NOP);
-const int32_t kOpcodeEnd = static_cast<int32_t>(OpCode::FINAL_MOVE_RANDOM);
+const int32_t kOpcodeEnd = static_cast<int32_t>(OpCode::END) - 1;
 
 // Enum-to-string map (for human-readable serialization); this should
 // be updated in Types.cc when opcodes are changed

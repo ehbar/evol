@@ -1,15 +1,15 @@
 # Part of Evol: The non-life evolution simulator.
-# Copyright 2014-2015 Eric Barrett <arctil@gmail.com>.
+# Copyright 2014-2017 Eric Barrett <arctil@gmail.com>.
 # 
 # This program is distributed under the terms of the GNU General Public
 # License Version 3.  See file `COPYING' for details.
 
-CPPFLAGS=-I/usr/local/include -Wall -std=c++11 -g -fno-rtti -fno-exceptions
-#CPPFLAGS=-I/usr/local/include -Wall -std=c++11 -O3 -fno-rtti -fno-exceptions
-LDFLAGS=-L. -L/usr/local/lib -ltinfo -lncurses -ljson-c -lpthread -lsfml-window -lsfml-graphics -lsfml-system -levol
+CPPFLAGS=-I/usr/local/include -Wall -DDEBUG=1 -std=c++14 -g -O1 -fno-rtti -fno-exceptions
+#CPPFLAGS=-I/usr/local/include -Wall -std=c++14 -O3 -fno-rtti -fno-exceptions
+LDFLAGS=-L. -levol -ltinfo -ljson-c -lpthread -lsfml-window -lsfml-graphics -lsfml-system #-lncurses
 CXX=g++
-SRCS=Arena.cc Coord.cc CursesRenderer.cc SFMLRenderer.cc EvolEngine.cc Dumper.cc Lifeform.cc Main.cc Random.cc Types.cc
-LIBOBJS=Arena.o Coord.o CursesRenderer.o SFMLRenderer.o EvolEngine.o Dumper.o Lifeform.o Random.o Types.o
+SRCS=Arena.cc Coord.cc EvolEngine.cc Dumper.cc Lifeform.cc Main.cc Random.cc Types.cc SFMLRenderer.cc # CursesRenderer.cc
+LIBOBJS=Arena.o Coord.o EvolEngine.o Dumper.o Lifeform.o Random.o Types.o SFMLRenderer.o # CursesRenderer.o
 OBJS=$(LIBOBJS) Main.o
 
 BIN=evol

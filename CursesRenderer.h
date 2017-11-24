@@ -1,7 +1,7 @@
 /*
  * Evol: The non-life evolution simulator.
  *
- * Copyright 2014-2015 Eric Barrett <arctil@gmail.com>.
+ * Copyright 2014-2017 Eric Barrett <arctil@gmail.com>.
  *
  * This program is distributed under the terms of the GNU General Public
  * License Version 3.  See file `COPYING' for details.
@@ -18,6 +18,9 @@
 namespace evol {
 
 
+/**
+ * Generate some tidy output on the terminal screen.
+ */
 class CursesRenderer {
  public:
   CursesRenderer(std::vector<EvolEngine> * engines = nullptr, Asteroid * asteroid = nullptr, int fps = 60)

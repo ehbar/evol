@@ -1,7 +1,7 @@
 /*
  * Evol: The non-life evolution simulator.
  *
- * Copyright 2014-2015 Eric Barrett <arctil@gmail.com>.
+ * Copyright 2014-2017 Eric Barrett <arctil@gmail.com>.
  *
  * This program is distributed under the terms of the GNU General Public
  * License Version 3.  See file `COPYING' for details.
@@ -17,8 +17,11 @@ namespace evol {
 
 
 /**
- * Generic type describing a 2-dimensional container with value type V.  V must
- * have a default constructor because I suck at C++.
+ * Generic type describing a 2-dimensional container with value type V.  The 2D plane
+ * has coordinates (0, 0) at the "top left" or "northwest" corner and (x-1, y-1) at
+ * the "bottom right"/"southeast" corner.
+ *
+ * V must have a default constructor because I suck at C++.
  */
 template <typename V>
 class Grid {
@@ -41,6 +44,7 @@ class Grid {
    * Return reference to contained object at the given coords.
    */
   V & At(const Coord & c) {
+    assert(c.y >= 0 && c.y < yMax_ && c.x >= 0 && c.x < xMax_);
     return spaces_[c.y * xMax_ + c.x];
   }
 

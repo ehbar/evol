@@ -1,5 +1,5 @@
 # Part of Evol: The non-life evolution simulator.
-# Copyright 2014-2015 Eric Barrett <arctil@gmail.com>.
+# Copyright 2014-2017 Eric Barrett <arctil@gmail.com>.
 # 
 # This program is distributed under the terms of the GNU General Public
 # License Version 3.  See file `COPYING' for details.
@@ -11,7 +11,7 @@ LDFLAGS=-L.. -L${GTEST_PATH} -lgtest -levol
 SRCS=TestMain.cc CoordTest.cc
 OBJS=TestMain.o CoordTest.o
 LIB=../libevol.a
-CXX=clang++
+CXX=g++
 BIN=evol-test
 
 .PHONY: test clean distclean

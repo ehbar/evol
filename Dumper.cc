@@ -1,7 +1,7 @@
 /*
  * Evol: The non-life evolution simulator.
  *
- * Copyright 2014-2015 Eric Barrett <arctil@gmail.com>.
+ * Copyright 2014-2017 Eric Barrett <arctil@gmail.com>.
  *
  * This program is distributed under the terms of the GNU General Public
  * License Version 3.  See file `COPYING' for details.
@@ -28,10 +28,10 @@ static const char * kDumperFilename = "lifeform-dump.json";
  * Entry point and main loop for the Dumper thread.
  */
 void Dumper::DumpLoop() {
-
   for (;;) {
-    if (DidGetExitAfterDelay())
+    if (DidGetExitAfterDelay()) {
       break;
+    }
     DumpAllEngines();
   }
 

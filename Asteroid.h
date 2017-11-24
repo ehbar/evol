@@ -1,7 +1,7 @@
 /*
  * Evol: The non-life evolution simulator.
  *
- * Copyright 2014-2015 Eric Barrett <arctil@gmail.com>.
+ * Copyright 2014-2017 Eric Barrett <arctil@gmail.com>.
  *
  * This program is distributed under the terms of the GNU General Public
  * License Version 3.  See file `COPYING' for details.
@@ -27,7 +27,7 @@ namespace evol {
  * development between arenas.
  *
  * The analogy is to an asteroid which may (or may not) have brought life to the
- * Earth, i.e. the theory of panspermia.
+ * Earth ("panspermia").
  */
 class Asteroid {
  public:

@@ -1,7 +1,7 @@
 /*
  * Evol: The non-life evolution simulator.
  *
- * Copyright 2014-2015 Eric Barrett <arctil@gmail.com>.
+ * Copyright 2014-2017 Eric Barrett <arctil@gmail.com>.
  *
  * This program is distributed under the terms of the GNU General Public
  * License Version 3.  See file `COPYING' for details.
@@ -46,6 +46,7 @@ const std::unordered_map<OpCode, std::string> kOpcodeStrings {
   OC(FINAL_MOVE_SOUTH),
   OC(FINAL_MOVE_WEST),
   OC(FINAL_MOVE_RANDOM),
+  OC(END)
 };
 
 

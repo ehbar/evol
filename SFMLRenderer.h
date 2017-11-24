@@ -1,7 +1,7 @@
 /*
  * Evol: The non-life evolution simulator.
  *
- * Copyright 2014-2015 Eric Barrett <arctil@gmail.com>.
+ * Copyright 2014-2017 Eric Barrett <arctil@gmail.com>.
  *
  * This program is distributed under the terms of the GNU General Public
  * License Version 3.  See file `COPYING' for details.
@@ -10,8 +10,8 @@
 #pragma once
 #include <cstdint>
 #include <vector>
-#include <SFML/Graphics/RenderWindow.hpp>
-#include <SFML/Graphics/Font.hpp>
+#include <SFML/Graphics.hpp>
+#include <SFML/Window.hpp>
 
 #include "EvolEngine.h"
 #include "LifeformWatermarks.h"
@@ -20,13 +20,16 @@
 namespace evol {
 
 
+
+
 class SFMLRenderer {
  public:
-  SFMLRenderer(std::vector<EvolEngine> * engines = nullptr, Asteroid * asteroid = nullptr, int fps = 60)
+  SFMLRenderer(std::vector<EvolEngine> * engines = nullptr, Asteroid * asteroid = nullptr, int fps = 30)
       : target_fps_(fps),
         did_init_(false),
         engines_(engines),
-        asteroid_(asteroid) {
+        asteroid_(asteroid),
+        fontSize_(16) {
     engine_stats_.resize(engines->size());
   }
   ~SFMLRenderer() { Cleanup(); };
@@ -39,6 +42,15 @@ class SFMLRenderer {
   void Cleanup();
 
  private:
+  enum PanelViewTarget { NONE, OVERVIEW, ENGINE, ARENA, HELP = 999 };
+
+  struct PanelView {
+    PanelViewTarget target;
+    int engine_number;
+    PanelView() : target(PanelViewTarget::OVERVIEW), engine_number(0) {}; 
+  };
+
+
   // General state
   int target_fps_;
   bool did_init_;
@@ -46,11 +58,22 @@ class SFMLRenderer {
   std::vector<LifeformWatermarks> engine_stats_;
   Asteroid * asteroid_;
 
-  // SFML state
-  std::unique_ptr<sf::RenderWindow> sfWindow_;
-  std::unique_ptr<sf::Font> sfFont_;
+  // What the user wants to see
+  PanelView panel_view_;
 
-  void RenderFrame(const Timer *);
+  // SFML state
+  sf::RenderWindow sfWindow_;
+  sf::Font sfFont_;
+  unsigned fontSize_;
+
+  // Private methods
+  void RenderOverview();
+  void RenderEngine() { abort(); }  // XXX unimplemented
+  void RenderArena() { abort(); }   // XXX unimplemented
+  void RenderHelp() { abort(); }    // XXX unimplemented
+  sf::Text MakeText(const char *fmt, ...);
+  void DrawText(const sf::Color & color, float x, float y, const char *fmt, ...);
+  void HandleKey(const sf::Event & event);
 };
 
 

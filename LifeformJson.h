@@ -1,7 +1,7 @@
 /*
  * Evol: The non-life evolution simulator.
  *
- * Copyright 2014-2015 Eric Barrett <arctil@gmail.com>.
+ * Copyright 2014-2017 Eric Barrett <arctil@gmail.com>.
  *
  * This program is distributed under the terms of the GNU General Public
  * License Version 3.  See file `COPYING' for details.
@@ -60,7 +60,7 @@ std::unique_ptr<json_object, JsonDeleter> JsonifyLifeforms(const Iter & begin_it
     json_object_array_add(json_lifeform_array.get(), json_lifeform);
   }
 
-  return std::move(json_lifeform_array);
+  return json_lifeform_array;
 }
 
 

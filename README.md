@@ -1,7 +1,7 @@
 # evol
 Evol: the non-life evolution simulator
 
-Copyright 2014-2015 Eric Barrett <arctil@gmail.com>.
+Copyright 2014-2017 Eric Barrett <arctil@gmail.com>.
 
 Description
 ===========

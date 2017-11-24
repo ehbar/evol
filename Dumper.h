@@ -1,7 +1,7 @@
 /*
  * Evol: The non-life evolution simulator.
  *
- * Copyright 2014-2015 Eric Barrett <arctil@gmail.com>.
+ * Copyright 2014-2017 Eric Barrett <arctil@gmail.com>.
  *
  * This program is distributed under the terms of the GNU General Public
  * License Version 3.  See file `COPYING' for details.
@@ -26,7 +26,9 @@ namespace evol {
 
 class Dumper {
  public:
-  Dumper(std::vector<EvolEngine> * engines = nullptr, time_t interval = 30)
+  Dumper() = delete;
+
+  Dumper(std::vector<EvolEngine> * engines, time_t interval = 30)
         : engines_(engines), dump_interval_secs_(interval), do_exit_(false) {
     // Build a lock for each engine
     engine_locks_.resize(engines_->size());
