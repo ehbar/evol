@@ -1,7 +1,7 @@
 /*
  * Evol: The non-life evolution simulator.
  *
- * Copyright 2014-2017 Eric Barrett <arctil@gmail.com>.
+ * Copyright 2014-2018 Eric Barrett <arctil@gmail.com>.
  *
  * This program is distributed under the terms of the GNU General Public
  * License Version 3.  See file `COPYING' for details.
@@ -62,7 +62,8 @@ std::unique_ptr<Lifeform> Arena::KillLifeform(Lifeform * lf) {
   }
   if (!tmp) {
     // Lifeform pointer wasn't found in the master list
-    abort();   // XXX debug only, should just return nullptr
+    abort();
+    return nullptr;
   }
 
   grid_->At(lf->GetCoord()).RemoveLifeform(lf);

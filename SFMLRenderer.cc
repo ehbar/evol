@@ -1,7 +1,7 @@
 /*
  * Evol: The non-life evolution simulator.
  *
- * Copyright 2014-2017 Eric Barrett <arctil@gmail.com>.
+ * Copyright 2014-2018 Eric Barrett <arctil@gmail.com>.
  *
  * This program is distributed under the terms of the GNU General Public
  * License Version 3.  See file `COPYING' for details.
@@ -26,7 +26,7 @@ namespace evol {
 
 static constexpr size_t kMaxStringSize = 512;
 static constexpr unsigned int kFontPixels = 16;
-static constexpr char * kFontFace = "/usr/share/fonts/truetype/freefont/FreeMono.ttf";
+static constexpr const char * kFontFace = "/usr/share/fonts/truetype/freefont/FreeMono.ttf";
 
 
 void SFMLRenderer::Init() {
@@ -109,7 +109,7 @@ void SFMLRenderer::RenderOverview() {
   float numAcross = ceil(sqrt(engines_->size()));
 
   auto panelSize = sfWindow_.getSize();
-  panelSize.y = std::max(panelSize.y - 25, 0U);  // leave room at bottom for global stats
+  panelSize.y = std::max(panelSize.y - 25, 0U);  // -25 = leave room at bottom for global stats
 
   sf::Vector2f rectsize(panelSize.x / numAcross - 5, panelSize.y / numAcross - 5);
 
@@ -173,7 +173,8 @@ void SFMLRenderer::DrawText(const sf::Color & color, float x, float y, const cha
   va_end(ap);
 
   sf::Text theText(tmpStr, sfFont_, kFontPixels);
-  theText.setColor(color);
+  theText.setFillColor(color);
+  theText.setOutlineColor(color);
   theText.setPosition(x, y);
   sfWindow_.draw(theText);
 }
