@@ -34,7 +34,7 @@ class Dumper {
     engine_locks_.resize(engines_->size());
     for (unsigned i = 0; i < engines_->size(); ++i) {
       EvolEngine & e = (*engines_)[i];
-      engine_locks_[i] = std::unique_lock<std::mutex>(*(e.GetVolatileMutex()), std::defer_lock);
+      engine_locks_[i] = std::unique_lock<std::mutex>(e.Mutex(), std::defer_lock);
     }
   }
 

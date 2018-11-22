@@ -17,7 +17,7 @@ namespace evol {
 
 
 /**
- * An Action represents the intention of a Lifeform after a single turn of DNA
+ * An Action represents the intention of a Lifeform after a single turn of Dna
  * processing.
  */
 struct Action {

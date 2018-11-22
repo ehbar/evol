@@ -4,8 +4,8 @@
 # This program is distributed under the terms of the GNU General Public
 # License Version 3.  See file `COPYING' for details.
 
-CPPFLAGS=-I/usr/local/include -Wall -DDEBUG=1 -std=c++14 -g -O1 -fno-rtti -fno-exceptions
-#CPPFLAGS=-I/usr/local/include -Wall -std=c++14 -O3 -fno-rtti -fno-exceptions
+#CPPFLAGS=-I/usr/local/include -Wall -DDEBUG=1 -std=c++14 -g -O1 -fno-rtti -fno-exceptions
+CPPFLAGS=-I/usr/local/include -Wall -std=c++14 -O3 -fno-rtti -fno-exceptions
 LDFLAGS=-L. -levol -ltinfo -ljson-c -lpthread -lsfml-window -lsfml-graphics -lsfml-system #-lncurses
 CXX=g++
 SRCS=Arena.cc Coord.cc EvolEngine.cc Dumper.cc Lifeform.cc Main.cc Random.cc Types.cc SFMLRenderer.cc # CursesRenderer.cc

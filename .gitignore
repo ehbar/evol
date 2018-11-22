@@ -6,5 +6,6 @@
 *.pyc
 gmon.out
 evol
+core
 libevol.a
 evol-test

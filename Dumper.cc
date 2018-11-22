@@ -54,8 +54,8 @@ void Dumper::DumpAllEngines() {
   // Copy lifeform list from each engine
   for (size_t i = 0; i < engines_->size(); ++i) {
     engine_locks_[i].lock();
-    const Arena * arena = (*engines_)[i].GetArena();
-    auto arena_lifeforms = arena->Lifeforms();
+    auto & arena = engines_->at(i).GetArena();
+    auto arena_lifeforms = arena.Lifeforms();
     all_lifeforms.insert(all_lifeforms.end(), arena_lifeforms.cbegin(), arena_lifeforms.cend());
   }
 
@@ -71,8 +71,11 @@ void Dumper::DumpAllEngines() {
   constexpr size_t kMaxFilename = 256;
   char filename[kMaxFilename];
   strncpy(filename, kDumperFilename, kMaxFilename);
-  json_object_to_file_ext(filename, json_lifeform_array.get(),
-                          JSON_C_TO_STRING_PRETTY | JSON_C_TO_STRING_NOZERO);
+  json_object_to_file_ext(
+    filename,
+    json_lifeform_array.get(),
+    JSON_C_TO_STRING_PRETTY | JSON_C_TO_STRING_NOZERO
+  );
 }
 
 

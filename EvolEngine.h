@@ -52,9 +52,9 @@ class EvolEngine {
     // Take on value of their do_exit_ and leave theirs set to true
     do_exit_ = other.do_exit_.exchange(true);
 
-    std::lock(volatile_mutex_, other.volatile_mutex_);
-    std::lock_guard<std::mutex> lgt(volatile_mutex_, std::adopt_lock);
-    std::lock_guard<std::mutex> lgo(other.volatile_mutex_, std::adopt_lock);
+    std::lock(mutex_, other.mutex_);
+    std::lock_guard<std::mutex> lgt(mutex_, std::adopt_lock);
+    std::lock_guard<std::mutex> lgo(other.mutex_, std::adopt_lock);
 
     arena_ = std::move(other.arena_);
     turns_ = other.turns_;
@@ -88,19 +88,19 @@ class EvolEngine {
   void Run();
 
   /**
-   * Gets volatile mutex (see explanation below).
+   * Returns engine mutex (see explanation below).
    */
-  std::mutex * GetVolatileMutex() { return &volatile_mutex_; }
+  std::mutex & Mutex() { return mutex_; }
 
   /**
-   * Gets const pointer to Arena the engine is using.
+   * Returns const reference to engine arena.
    */
-  const Arena * GetArena() const { return arena_.get(); }
+  const Arena & GetArena() const { return *arena_.get(); }
 
   /**
    * Gets pointer to the list of timers the engine is using.
    */
-  const std::list<const Timer *> * GetTimers() const { return &timers_; }
+  const std::list<const Timer *> & GetTimers() const { return timers_; }
 
  private:
   // Loop condition for Run().
@@ -114,12 +114,12 @@ class EvolEngine {
   // List of timers currently in use by the program
   std::list<const Timer *> timers_;
 
-  // The volatile mutex is held whenever the engine reserves the right to change
-  // state information (member objects such as arena, lifeforms, etc.).  It will
+  // The mutex is held whenever the engine reserves the right to change state
+  // information (member objects such as arena, lifeforms, etc.).  It will
   // also be held by outside threads which want to read this information, like
   // the renderer.  Because it is a single point of contention every user should
   // strive to minimize the time this lock is held.
-  std::mutex volatile_mutex_;
+  std::mutex mutex_;
 
   // External Asteroid object (for moving lifeforms between engines).
   Asteroid * asteroid_;

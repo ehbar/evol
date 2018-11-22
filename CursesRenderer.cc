@@ -105,17 +105,17 @@ void CursesRenderer::RenderFrame(const Timer * poll_timer) {
 
     {
       // Lock the engine.  Clock is ticking now!
-      std::unique_lock<std::mutex> eg(*engine.GetVolatileMutex());
+      std::unique_lock<std::mutex> eg(engine.Mutex());
 
       // Get lifeform count summary
-      const Arena * arena = engine.GetArena();
-      num_alive = arena->LifeformsCount();
+      auto & arena = engine.GetArena();
+      num_alive = engine.GetArena().LifeformsCount();
       total_num_alive += num_alive;
-      num_dead = arena->DeadLifeformsCount();
+      num_dead = arena.DeadLifeformsCount();
       total_num_dead += num_dead;
 
       // Get average DNA length
-      auto all_lifeforms = arena->Lifeforms();
+      auto all_lifeforms = arena.Lifeforms();
       for (auto & lf : all_lifeforms) {
         uint64_t dl = lf->GetDnaSize();
         average_dna_len += dl;
@@ -125,7 +125,7 @@ void CursesRenderer::RenderFrame(const Timer * poll_timer) {
       average_dna_len /= num_alive;
 
       // Get timer stats
-      for (auto timer : *engine.GetTimers()) {
+      for (auto & timer : engine.GetTimers()) {
         timer_stats.push_front(timer->GetStats());
       }
     }
@@ -157,10 +157,10 @@ void CursesRenderer::RenderFrame(const Timer * poll_timer) {
     for (auto & tstats: timer_stats) {
       snprintf(out, sizeof(out), "%s time (us): %ld avg (%ld/sec excl. overhead), %ld min, %ld max",
                tstats.description.c_str(),
-               static_cast<long unsigned>(tstats.us_avg),
-               static_cast<long unsigned>(1e6 / tstats.us_avg),
-               static_cast<long unsigned>(tstats.us_min),
-               static_cast<long unsigned>(tstats.us_max));
+               static_cast<long int>(tstats.us_avg),
+               static_cast<long int>(1e6 / tstats.us_avg),
+               static_cast<long int>(tstats.us_min),
+               static_cast<long int>(tstats.us_max));
       mvaddstr(line++, 4, out);
     }
     ++line;  // blank space at end

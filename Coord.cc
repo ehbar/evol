@@ -9,8 +9,6 @@
 
 #include "Coord.h"
 
-#include <cstdint>
-
 namespace evol {
 
 

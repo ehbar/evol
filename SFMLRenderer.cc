@@ -24,7 +24,7 @@
 namespace evol {
 
 
-static constexpr size_t kMaxStringSize = 512;
+static constexpr size_t kMaxStringSize = 511;
 static constexpr unsigned int kFontPixels = 16;
 static constexpr const char * kFontFace = "/usr/share/fonts/truetype/freefont/FreeMono.ttf";
 
@@ -132,24 +132,35 @@ void SFMLRenderer::RenderOverview() {
     uint64_t num_dead = 0;
     uint64_t dna_count = 0;
     uint64_t highest_gen = 0;
+    TimerStats tstats;
     {
       // Lock the engine.  Keep this part as fast as possible
-      std::lock_guard<std::mutex> eg(*e.GetVolatileMutex());
+      std::lock_guard<std::mutex> eg(e.Mutex());
 
-      const Arena * arena = e.GetArena();
-      num_alive = arena->LifeformsCount();
-      num_dead = arena->DeadLifeformsCount();
-      for (auto & lf : arena->Lifeforms()) {
+      auto & arena = e.GetArena();
+      num_alive = arena.LifeformsCount();
+      num_dead = arena.DeadLifeformsCount();
+      for (auto & lf : arena.Lifeforms()) {
         dna_count += lf->GetDnaSize();
         highest_gen = std::max(highest_gen, lf->Gen());
       }
+      tstats = e.GetTimers().front()->GetStats();  // theoretically this returns multiple timers, implement one for now
     }
 
     sf::Color black(0, 0, 0);
     DrawText(black, rectpos.x + 2, rectpos.y + 2,
-             "Live: %u\nDead: %u\nAvg Dna len: %.2f\nHighest gen.: %u",
+             "Live: %u\nDead: %u\nAvg Dna len: %.2f\n",
              num_alive, num_dead, static_cast<float>(dna_count) / num_alive,
              highest_gen);
+    sf::Color timerColor(0, 0, 64);
+    DrawText(timerColor, rectpos.x + 2, rectpos.y + (panelSize.y / numAcross) - 75,
+             "%s:\n  %ld avg (%ld/s)\n  %ld mn, %ld mx",
+             tstats.description.c_str(),
+             static_cast<long int>(tstats.us_avg),
+             static_cast<long int>(1e6 / tstats.us_avg),
+             static_cast<long int>(tstats.us_min),
+             static_cast<long int>(tstats.us_max)
+    );
 
     // Set up for next engine
     if (++x >= numAcross) {
@@ -165,7 +176,7 @@ void SFMLRenderer::RenderOverview() {
  * x, y.
  */
 void SFMLRenderer::DrawText(const sf::Color & color, float x, float y, const char *fmt, ...) {
-  char tmpStr[kMaxStringSize];
+  char tmpStr[kMaxStringSize+1];
   va_list ap;
 
   va_start(ap, fmt);

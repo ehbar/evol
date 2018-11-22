@@ -41,12 +41,12 @@ void EvolEngine::Run() {
   Timer loop_timer("Main loop");
 
   {
-    std::lock_guard<std::mutex> lg(volatile_mutex_);
+    std::lock_guard<std::mutex> lg(mutex_);
     timers_.assign({&loop_timer});
   }
 
   while (!do_exit_) {
-    std::unique_lock<std::mutex> vl(volatile_mutex_, std::defer_lock);
+    std::unique_lock<std::mutex> vl(mutex_, std::defer_lock);
 
     // Start main loop timer
     loop_timer.StartCollection();
@@ -89,8 +89,6 @@ void EvolEngine::Run() {
 
     // End main loop timer
     loop_timer.EndCollection();
-
-    vl.unlock();  // No more changes to arena & lifeforms during this loop iteration
     ++turns_;
   }
 
@@ -156,7 +154,9 @@ void EvolEngine::ResolveInteractions(ActionMap * interactions) {
  * (adjacency meaning being in a 9x9 grid around the square).  For each OCCUPIED
  * square, energy is split only among the occupants.
  *
- * Finally, every lifeform loses kCostOfLiving energy per turn.
+ * Finally, every lifeform loses a base amount of energy + (numbero of opcodes *
+ * cost per opcode) every turn.  The opcode cost discourages large amounts of
+ * junk Dna which consume CPU cycles.
  */
 void EvolEngine::ApplyEnergyLevelsToLifeforms() {
   Coord c;
