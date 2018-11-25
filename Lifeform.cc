@@ -21,7 +21,7 @@
 namespace evol {
 
 
-uint64_t Lifeform::next_id_ = 1;
+std::atomic<uint64_t> LifeformImpl::next_id_ = 1;
 
 
 namespace {
@@ -37,7 +37,7 @@ constexpr uint8_t kCmpFlag = 0x01;
  * Set/clear the given bit in the given flag type based on the boolean
  * value of the predicate.
  */
-inline void set_flag(Flag & flags, const Flag & bit, bool pred = true) {
+inline void set_flag_if(Flag & flags, const Flag & bit, bool pred = true) {
   if (pred)
     flags |= bit;
   else
@@ -51,15 +51,15 @@ inline bool get_flag(const Flag & flags, const Flag & bit) {
   return flags & bit;
 }
 
-}  // anon namespace
+}  // namespace anon
 
 
-ActionType Lifeform::RunDna(const void *arena__) {
+ActionType LifeformImpl::RunDna(void *arena__) {
   // This ugly cast is because of a circular dependency in Lifeform and Arena
-  const Arena *arena = static_cast<const Arena *>(arena__);
+  Arena *arena = static_cast<Arena *>(arena__);
 
   if (dna_.empty()) {
-    // A lifeform with no Dna can't survive
+    // A lifeform with no Dna dies
     return ActionType::APOPTOSIS;
   }
 
@@ -76,25 +76,25 @@ ActionType Lifeform::RunDna(const void *arena__) {
 
       // Set cmp flags based on whether targeted square is occupied
       case OpCode::IS_NORTH_OCCUPIED:
-        set_flag(flags, kCmpFlag, arena->GetLifeformCount(coord_.North()));
+        set_flag_if(flags, kCmpFlag, arena->NumLifeformsAt(coord_.North()));
         continue;
       case OpCode::IS_SOUTH_OCCUPIED:
-        set_flag(flags, kCmpFlag, arena->GetLifeformCount(coord_.South()));
+        set_flag_if(flags, kCmpFlag, arena->NumLifeformsAt(coord_.South()));
         continue;
       case OpCode::IS_EAST_OCCUPIED:
-        set_flag(flags, kCmpFlag, arena->GetLifeformCount(coord_.East()));
+        set_flag_if(flags, kCmpFlag, arena->NumLifeformsAt(coord_.East()));
         continue;
       case OpCode::IS_WEST_OCCUPIED:
-        set_flag(flags, kCmpFlag, arena->GetLifeformCount(coord_.West()));
+        set_flag_if(flags, kCmpFlag, arena->NumLifeformsAt(coord_.West()));
         continue;
 
       // Set cmp flag if local tile has other lifeforms
       case OpCode::IS_CROWDED:
-        set_flag(flags, kCmpFlag, arena->GetLifeformCount(coord_) > 1);
+        set_flag_if(flags, kCmpFlag, arena->NumLifeformsAt(coord_) > 1);
         continue;
       // Set cmp flag if adjacent tiles have other lifeforms (local is ignored)
       case OpCode::IS_NEIGHBOR:
-        set_flag(flags, kCmpFlag, !arena->GetAdjacentLifeforms(coord_).empty());
+        set_flag_if(flags, kCmpFlag, arena->AdjacentLifeforms(coord_));  // TODO: optimize
         continue;
 
       // Final moves, return action
@@ -150,6 +150,7 @@ ActionType Lifeform::RunDna(const void *arena__) {
       default:
         // We should handle all cases in this for loop; not doing so is fatal
         abort();
+        (*(int *)0) = 0;
     }
   }
 
@@ -158,7 +159,7 @@ ActionType Lifeform::RunDna(const void *arena__) {
 }
 
 
-void Lifeform::Mutate() {
+void LifeformImpl::Mutate() {
   // - Decide how many mutations to perform
   // - For each mutation:
   //   - Decide quantity N, 1 <= N <= L where L is the upper limit
@@ -205,7 +206,7 @@ void Lifeform::Mutate() {
  * Insert DNA at the given offset with the given length.  All codes
  * so inserted are OpCode::NOP.
  */
-void Lifeform::MutateInsert(int32_t mutation_len, int32_t mutation_start) {
+void LifeformImpl::MutateInsert(int32_t mutation_len, int32_t mutation_start) {
   dna_.insert(dna_.begin() + mutation_start, mutation_len, OpCode::NOP);
 }
 
@@ -213,7 +214,7 @@ void Lifeform::MutateInsert(int32_t mutation_len, int32_t mutation_start) {
 /**
  * Delete the given length of Dna at the given offset.
  */
-void Lifeform::MutateDelete(int32_t mutation_len, int32_t mutation_start) {
+void LifeformImpl::MutateDelete(int32_t mutation_len, int32_t mutation_start) {
   auto start = dna_.begin() + mutation_start;
   dna_.erase(start, start + mutation_len);
 }
@@ -222,7 +223,7 @@ void Lifeform::MutateDelete(int32_t mutation_len, int32_t mutation_start) {
 /**
  * Scramble Dna starting at the given offset with the given length.
  */
-void Lifeform::MutateChange(int32_t mutation_len, int32_t mutation_start) {
+void LifeformImpl::MutateChange(int32_t mutation_len, int32_t mutation_start) {
   auto start = dna_.begin() + mutation_start;
   auto end = start + mutation_len;
   for (auto oc = start; oc < end; oc++) {
@@ -232,26 +233,30 @@ void Lifeform::MutateChange(int32_t mutation_len, int32_t mutation_start) {
 
 
 /**
- * Swap Dna at the given location with another random location.  These can
- * overlap.
+ * Swap Dna at the given location with another random location.  With
+ * source range S and target range T, if S and T overlap:
+ *
+ *   T is overwritten with S, then
+ *   S overwritten with original contents of T
+ *
  */
-void Lifeform::MutateTranslate(int32_t mutation_len, int32_t mutation_start) {
-  auto p_start = dna_.begin() + mutation_start;
-  auto p_end = p_start + mutation_len;
-
-  auto s_start = dna_.begin() + Random::Int32(0, dna_.size() - mutation_len);
-  if (s_start == p_start)
-    return;
+void LifeformImpl::MutateTranslate(int32_t mutation_len, int32_t mutation_start) {
+  auto s_start = dna_.begin() + mutation_start;
   auto s_end = s_start + mutation_len;
 
-  // Copy p vector to temp space
-  Dna tmp(p_start, p_end);
+  auto t_start = dna_.begin() + Random::Int32(0, dna_.size() - mutation_len);
+  if (t_start == s_start)
+    return;
+  auto t_end = t_start + mutation_len;
+
+  // Copy s vector to temp space
+  Dna tmp(s_start, s_end);
   // Overwrite p vector with s vector
-  for (auto s = s_start, p = p_start; s != s_end && p != p_end; s++, p++) {
-    *p = *s;
+  for (auto t = t_start, s = s_start; t != t_end && s != s_end; t++, s++) {
+    *s = *t;
   }
   // Overwrite old s vector with previously saved p vector
-  for (auto s = s_start, p = tmp.begin(); s != s_end && p != tmp.end(); s++, p++) {
+  for (auto s = t_start, p = tmp.begin(); s != t_end && p != tmp.end(); s++, p++) {
     *s = *p;
   }
 }

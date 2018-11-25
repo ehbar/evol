@@ -30,12 +30,14 @@ class ArenaBlock {
     energy_ = other.energy_;
     elevation_ = other.elevation_;
     lifeforms_ = std::move(other.lifeforms_);
+    other.lifeforms_.clear();
   }
 
   // Delete clone & assign constructors because it's not obvious how we'd handle
   // the list of occupant lifeforms in the source ArenaBlock
   ArenaBlock(const ArenaBlock &) = delete;
   ArenaBlock & operator=(const ArenaBlock &other) = delete;
+
 
   /**
    * Get and set Energy value of the block
@@ -54,25 +56,25 @@ class ArenaBlock {
   }
 
   /**
-   * Returns a const pointer to the ArenaBlock's list of lifeforms.
+   * Returns reference to the ArenaBlock's list of lifeforms.
    */
-  const std::list<Lifeform *> * Lifeforms() const {
-    return &lifeforms_;
-  }
+  std::vector<Lifeform> & Lifeforms() { return lifeforms_; }
+  const std::vector<Lifeform> & Lifeforms() const { return lifeforms_; }
 
   /**
    * Adds the given Lifeform to the block.
    */
-  void AddLifeform(Lifeform * lf) {
+  Lifeform & AddLifeform(const Lifeform & lf) {
     lifeforms_.push_back(lf);
+    return lifeforms_.back();
   }
 
   /**
    * Removes the given lifeform from the block, if it was there.
    */
-  void RemoveLifeform(Lifeform * victim) {
+  void RemoveLifeform(const Lifeform & victim) {
     for (auto iter = lifeforms_.begin(); iter != lifeforms_.end(); iter++) {
-      if (*iter == victim) {
+      if (**iter == *victim) {
         lifeforms_.erase(iter);
         break;
       }
@@ -82,9 +84,9 @@ class ArenaBlock {
   /**
    * Returns true if the lifeform is in the block.
    */
-  bool HasLifeform(Lifeform * lf) {
+  bool HasLifeform(const Lifeform & lf) {
     for (auto & occupant : lifeforms_) {
-      if (occupant == lf) {
+      if (*occupant == *lf) {
         return true;
       }
     }
@@ -94,7 +96,7 @@ class ArenaBlock {
  private:
   Energy energy_;
   Elevation elevation_;
-  std::list<Lifeform *> lifeforms_;
+  std::vector<Lifeform> lifeforms_;
 };
 
 

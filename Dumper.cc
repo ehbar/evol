@@ -49,7 +49,7 @@ void Dumper::DumpLoop() {
  * engine locks sooner.
  */
 void Dumper::DumpAllEngines() {
-  std::vector<Lifeform *> all_lifeforms;
+  std::vector<Lifeform> all_lifeforms;
 
   // Copy lifeform list from each engine
   for (size_t i = 0; i < engines_->size(); ++i) {

@@ -11,7 +11,7 @@
 #define EVOL_ARENA_H_
 
 #include <cstdint>
-#include <list>
+#include <algorithm>
 #include <memory>
 #include <vector>
 
@@ -28,92 +28,89 @@ namespace evol {
  * The Arena is the grid which all lifeforms live upon.  It has methods for
  * accessing said lifeforms.
  *
- * The Arena owns the memory of all lifeforms loaded into it.
  */
 class Arena {
  public:
-  Arena(Unit w, Unit h) : width_(w), height_(h), dead_lifeforms_count_(0) {
+  Arena() = delete;
+  Arena(Unit w, Unit h) : width_(w), height_(h), dead_lifeforms_count_(0), grid_(Grid<ArenaBlock>(w, h)) {
     assert(w > 0 && h > 0);
-    grid_.reset(new Grid<ArenaBlock>(w, h));
-    //MakeElevationMap();
   }
 
   Arena(const Arena &) = delete;
+  Arena(Arena &&) = delete;
   Arena & operator=(const Arena &) = delete;
 
   int Width() const { return width_; }
   int Height() const { return height_; }
 
   /**
-   * Return a vector of living lifeforms.
+   * Returns the vector of living lifeforms.
    */
-  std::vector<Lifeform *> Lifeforms() const {
-    std::vector<Lifeform *> lfv(lifeforms_.size());
-    int i = 0;
-    for (auto & lfp : lifeforms_) {
-      lfv[i++] = lfp.get();
-    }
-    return lfv;
-  }
+  std::vector<Lifeform> Lifeforms() { return lifeforms_; }
+  const std::vector<Lifeform> Lifeforms() const { return lifeforms_; }
 
   /**
    * Return total number of live lifeforms.
    */
-  uint64_t LifeformsCount() const { return lifeforms_.size(); }
+  uint64_t NumLifeforms() const { return lifeforms_.size(); }
 
   /**
    * Return total number of dead lifeforms.
    */
-  uint64_t DeadLifeformsCount() const { return dead_lifeforms_count_; }
+  uint64_t NumDeadLifeforms() const { return dead_lifeforms_count_; }
 
   /**
-   * Add the given lifeform at the given x/y coord.  This takes memory ownership
-   * of the lifeform.
+   * Add the given lifeform at the given x/y coord.
    */
-  void AddAndOwnLifeform(Lifeform * lf, const Coord & c);
+  void AddLifeform(Lifeform lf, const Coord & c);
 
   /**
-   * Returns a list of Lifeforms at the given location.
+   * Returns Lifeforms at the given location.
    */
-  std::list<Lifeform *> GetLifeforms(const Coord & c) const;
+  std::vector<Lifeform> LifeformsAt(const Coord & c) { return grid_.At(c).Lifeforms(); }
+  const std::vector<Lifeform> LifeformsAt(const Coord & c) const { return grid_.At(c).Lifeforms(); }
 
   /**
-   * Returns a count of Lifeforms at the given location.
+   * Returns count of Lifeforms at the given location.
    */
-  size_t GetLifeformCount(const Coord &c) const;
+  uint64_t NumLifeformsAt(const Coord & c) { return grid_.At(c).Lifeforms().size(); }
 
   /**
    * Move the lifeform to the given location.
    */
-  void MoveLifeform(Lifeform * lf, const Coord & c);
+  void MoveLifeform(Lifeform lf, const Coord & c);
 
   /**
-   * Kill the given lifeform.  Marks it dead, removes it from the arena plane,
-   * and releases memory ownership of its instance to the caller.  Since it's in
-   * a unique_ptr, if the caller ignores the return value it will just be freed.
+   * Removes the given lifeform from the plane if it exists.  Returns the
+   * lifeform if it was found, else nullptr.
    */
-  std::unique_ptr<Lifeform> KillLifeform(Lifeform *);
+  Lifeform RemoveLifeform(const Lifeform & lf);
 
   /**
-   * Remove a random lifeform.  Releases memory ownership to the caller.
+   * Remove a random lifeform.  Returns the lifeform if it was removed,
+   * else nullptr (this will happen if the arena is empty).
    */
-  std::unique_ptr<Lifeform> RemoveRandomLifeform();
+  Lifeform RemoveRandomLifeform();
 
   /**
-   * Returns all lifeforms in squares adjacent to the given Coord.  Does not
-   * return lifeforms in the Coord itself.
+   * Returns all lifeforms in squares adjacent to the given Coord.
    */
-  std::list<Lifeform *> GetAdjacentLifeforms(const Coord &) const;
+  std::vector<LifeformImpl *> GetAdjacentLifeforms(const Coord &);
+
+  /**
+   * Returns true if there are adjacent lifeforms.
+   */
+  bool AdjacentLifeforms(const Coord &c) const;
 
   /**
    * Return energy available at the given coordinate.
    */
-  Energy GetEnergy(const Coord &c) const;
+  Energy GetEnergy(const Coord &c) const { return grid_.At(c).GetEnergy(); }
 
   /**
    * Return elevation of the given coordinate.
    */
-  Elevation GetElevation(const Coord &c) const;
+  Elevation GetElevation(const Coord &c) const { return grid_.At(c).GetElevation(); }
 
   /**
    * Utility method: Return a coord guaranteed to be in the bounds of this arena
@@ -126,16 +123,13 @@ class Arena {
  private:
   Unit width_;
   Unit height_;
+  uint64_t dead_lifeforms_count_;
 
-  // This is the master list of lifeforms.  It is responsible for memory
-  // ownership.  Thus no pointers or references to the lifeform must remain if
-  // it is deleted from this list.
-  std::list<std::unique_ptr<Lifeform>> lifeforms_;
+  std::vector<Lifeform> lifeforms_;
 
   // Grid of ArenaBlocks representing the "physical" space.
-  std::unique_ptr<Grid<ArenaBlock>> grid_;
+  Grid<ArenaBlock> grid_;
 
-  uint64_t dead_lifeforms_count_;
 };
 
 

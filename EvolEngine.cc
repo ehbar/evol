@@ -29,8 +29,7 @@ void EvolEngine::Seed(unsigned num_lifeforms) {
   for (unsigned i = 0; i < num_lifeforms; i++) {
     for (;;) {
       Coord c = arena_->GetRandomCoordOnArena();
-      Lifeform * lf(new Lifeform(0, Dna {OpCode::FINAL_MOVE_RANDOM}));
-      arena_->AddAndOwnLifeform(lf, c);
+      arena_->AddLifeform(make_lifeform(0, Dna {OpCode::FINAL_MOVE_RANDOM}), c);
       break;
     }
   }
@@ -59,12 +58,12 @@ void EvolEngine::Run() {
     }
 
     // Map and resolve all actions
-    std::unique_ptr<ActionMap> interactions(MapActions(actions));
+    ActionMap interactions{MapActions(actions)};
 
     // Time to update the arena and birth/kill lifeforms; take the main lock
     vl.lock();
 
-    ResolveInteractions(interactions.get());
+    ResolveInteractions(interactions);
 
     // Handle energy and replication
     ApplyEnergyLevelsToLifeforms();
@@ -75,15 +74,18 @@ void EvolEngine::Run() {
 
     // Blast a lifeform off into outer space!  (Actually another engine)
     if (Params::kLifeformAsteroidLaunchInterval != 0 && turns_ % Params::kLifeformAsteroidLaunchInterval == 0) {
-      asteroid_->LaunchLifeform(arena_->RemoveRandomLifeform());
+      auto lf = arena_->RemoveRandomLifeform();
+      if (lf) {
+        asteroid_->LaunchLifeform(lf);
+      }
     }
 
     // Get a lifeform from outer space!  (Actually another engine)
     if (Params::kLifeformAsteroidLandInterval != 0 && turns_ % Params::kLifeformAsteroidLandInterval == 0) {
-      std::unique_ptr<Lifeform> lf = asteroid_->LandLifeform();
+      auto lf = asteroid_->LandLifeform();
       if (lf) {
         Coord c(arena_->GetRandomCoordOnArena());
-        arena_->AddAndOwnLifeform(lf.release(), c);
+        arena_->AddLifeform(lf, c);
       }
     }
 
@@ -97,10 +99,9 @@ void EvolEngine::Run() {
 }
 
 
-std::unique_ptr<ActionMap>
-EvolEngine::MapActions(const std::forward_list<Action> & actions) const {
-  std::unique_ptr<ActionMap> interactions(new ActionMap());
-  for (auto & act : actions) {
+ActionMap EvolEngine::MapActions(const std::forward_list<Action> & actions) const {
+  ActionMap interactions{ActionMap()};
+  for (auto act : actions) {
     // We place each action into a map of coords -> actions for later
     // resolution
     Coord dest;
@@ -124,7 +125,7 @@ EvolEngine::MapActions(const std::forward_list<Action> & actions) const {
         dest = act.actor->GetCoord().West();
         break;
     }
-    (*interactions)[dest].emplace_back(act);
+    interactions[dest].emplace_back(act);
   }
   return interactions;
 }
@@ -133,13 +134,13 @@ EvolEngine::MapActions(const std::forward_list<Action> & actions) const {
 /**
  * Commit the resolved interactions of each lifeform.
  */
-void EvolEngine::ResolveInteractions(ActionMap * interactions) {
-  for (auto & elem : *interactions) {
+void EvolEngine::ResolveInteractions(ActionMap & interactions) {
+  for (auto & elem : interactions) {
     auto & coord = elem.first;
     auto & actions = elem.second;
     for (auto & act: actions) {
       if (act.type == ActionType::APOPTOSIS) {
-        arena_->KillLifeform(act.actor);
+        arena_->RemoveLifeform(act.actor);
       } else if (act.type != ActionType::NOTHING) {
         arena_->MoveLifeform(act.actor, coord);
       }
@@ -165,7 +166,7 @@ void EvolEngine::ApplyEnergyLevelsToLifeforms() {
 
   for (c.x = 0; c.x < width; c.x++) {
     for (c.y = 0; c.y < height; c.y++) {
-      auto occupants = arena_->GetLifeforms(c);
+      auto occupants = arena_->LifeformsAt(c);
       float available_energy = arena_->GetEnergy(c);
       float energy_share_per_lf = 0.0;
 
@@ -177,7 +178,7 @@ void EvolEngine::ApplyEnergyLevelsToLifeforms() {
       } else {
         // Split all of empty square's energy between adjacent occupants
         auto adjacent = arena_->GetAdjacentLifeforms(c);
-        if (adjacent.size() < 1) {
+        if (adjacent.empty()) {
           continue;
         }
         energy_share_per_lf = available_energy / adjacent.size();
@@ -190,7 +191,8 @@ void EvolEngine::ApplyEnergyLevelsToLifeforms() {
 
   // Deduct cost of living
   for (auto & lf : arena_->Lifeforms()) {
-    lf->SetEnergy(lf->GetEnergy() - Params::kCostOfLiving - Params::kCostOfOpcode * lf->GetDnaSize());
+    float energy = lf->GetEnergy() - Params::kCostOfLiving - Params::kCostOfOpcode * lf->GetDnaSize();
+    lf->SetEnergy(energy);
   }
 }
 
@@ -198,22 +200,27 @@ void EvolEngine::ApplyEnergyLevelsToLifeforms() {
 void EvolEngine::KillStarvedLifeforms() {
   for (auto & lf : arena_->Lifeforms()) {
     if (lf->GetEnergy() <= 0.0) {
-      arena_->KillLifeform(lf);
+      lf->SetKilled();
+      arena_->RemoveLifeform(lf);
     }
   }
 }
 
 
 void EvolEngine::SplitFatLifeforms() {
-  for (auto & lf : arena_->Lifeforms()) {
+  auto lifeforms = arena_->Lifeforms();
+  for (auto & lf : lifeforms) {
+    if (!lf) {
+      abort();
+    }
     float parent_energy = lf->GetEnergy();
     if (parent_energy >= Params::kMeiosisLevel) {
-      Lifeform * baby(lf->MakeChild());
+      Lifeform baby = lf->MakeChild();
       baby->Mutate();
       parent_energy -= Params::kMeiosisCost;
       baby->SetEnergy(parent_energy / 2.0);
       lf->SetEnergy(parent_energy / 2.0);
-      arena_->AddAndOwnLifeform(baby, lf->GetCoord());
+      arena_->AddLifeform(baby, lf->GetCoord());
     }
   }
 }

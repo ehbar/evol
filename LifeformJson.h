@@ -38,7 +38,7 @@ std::unique_ptr<json_object, JsonDeleter> JsonifyLifeforms(const Iter & begin_it
   std::unique_ptr<json_object, JsonDeleter> json_lifeform_array (json_object_new_array(), JsonDeleter());
 
   for (auto it = begin_it; it != end_it; it++) {
-    Lifeform * lf = *it;
+    const Lifeform lf = *it;
     struct json_object *json_lifeform = json_object_new_object();
     json_object_object_add(json_lifeform, "id", json_object_new_int64(lf->Id()));
     json_object_object_add(json_lifeform, "gen", json_object_new_int64(lf->Gen()));

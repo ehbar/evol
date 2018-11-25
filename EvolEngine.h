@@ -129,12 +129,12 @@ class EvolEngine {
    * the living lifeforms into a map of coord => [action1, action2, ...].  The
    * map is heavyweight so we return it by pointer.
    */
-  std::unique_ptr<ActionMap> MapActions(const std::forward_list<Action> &) const;
+  ActionMap MapActions(const std::forward_list<Action> &) const;
 
   /**
    * Resolve lifeform actions as collated by MapActions.
    */
-  void ResolveInteractions(ActionMap *);
+  void ResolveInteractions(ActionMap &);
 
   /**
    * Calculate the total energy available to lifeforms on the grid, and apply

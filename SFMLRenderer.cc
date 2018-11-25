@@ -138,9 +138,9 @@ void SFMLRenderer::RenderOverview() {
       std::lock_guard<std::mutex> eg(e.Mutex());
 
       auto & arena = e.GetArena();
-      num_alive = arena.LifeformsCount();
-      num_dead = arena.DeadLifeformsCount();
-      for (auto & lf : arena.Lifeforms()) {
+      num_alive = arena.NumLifeforms();
+      num_dead = arena.NumDeadLifeforms();
+      for (const auto & lf : arena.Lifeforms()) {
         dna_count += lf->GetDnaSize();
         highest_gen = std::max(highest_gen, lf->Gen());
       }

@@ -7,12 +7,18 @@
  * License Version 3.  See file `COPYING' for details.
  */
 
+#include <unistd.h>
+#include <cstdio>
 #include <vector>
 #include <thread>
 
+#if EVOL_RENDERER_CURSES
+#  include "CursesRenderer.h"
+#elif EVOL_RENDERER_SFML
+#  include "SFMLRenderer.h"
+#endif
+
 #include "Asteroid.h"
-//#include "CursesRenderer.h"
-#include "SFMLRenderer.h"
 #include "EvolEngine.h"
 #include "Dumper.h"
 #include "Params.h"
@@ -21,6 +27,8 @@ using namespace evol;
 
 
 int main(int argc, char *argv[]) {
+
+#if EVOL_RENDERER_CURSES || EVOL_RENDERER_SFML
   unsigned numCores = Params::kNumEngines;
   if (numCores < 1) {
     numCores = std::thread::hardware_concurrency();
@@ -29,6 +37,9 @@ int main(int argc, char *argv[]) {
       numCores = 1;
     }
   }
+#else
+  unsigned numCores = 1;
+#endif
 
   std::vector<EvolEngine> engines(numCores);
   std::vector<std::thread> engine_threads(numCores);
@@ -44,25 +55,47 @@ int main(int argc, char *argv[]) {
 
   // Thread which dumps lifeforms to JSON output every few seconds
   Dumper dumper(&engines, Params::kJsonDumpIntervalSeconds);
+#if EVOL_RENDERER_CURSES || EVOL_RENDERER_SFML
+  // Dumper is also disabled if no renderer used
   dumper.Start();
+#endif
 
   // Renderer thread; this updates the screen and waits for user quit
-  //CursesRenderer renderer(&engines, &asteroid, 30);
+#if EVOL_RENDERER_CURSES
+  CursesRenderer renderer(&engines, &asteroid, 30);
+#elif EVOL_RENDERER_SFML
   SFMLRenderer renderer(&engines, &asteroid, 30);
+#endif
+#if EVOL_RENDERER_CURSES || EVOL_RENDERER_SFML
   renderer.Init();
   renderer.Run();
+#else
+  // Fallback for no renderer (useful for gdb)
+  for (;;) {
+    sleep(1);
+  }
+#endif
 
-  // renderer.Run() returns when user has pressed a key to quit
-
+#if EVOL_RENDERER_CURSES || EVOL_RENDERER_SFML
   dumper.DoExit();
+#endif
+
   for (unsigned i = 0; i < numCores; ++i) {
     engines[i].DoExit();
   }
+
+#if EVOL_RENDERER_CURSES || EVOL_RENDERER_SFML
   dumper.JoinThread();
+#endif
+
   for (unsigned i = 0; i < numCores; ++i) {
     engine_threads[i].join();
   }
 
+#if EVOL_RENDERER_CURSES || EVOL_RENDERER_SFML
   renderer.Cleanup();
+#endif
+  puts("Exiting normally");
+
   return 0;
 }

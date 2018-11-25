@@ -10,7 +10,6 @@
 #include "Arena.h"
 
 #include <stdlib.h>  // abort()
-
 #include <cstdint>
 
 #include "ArenaBlock.h"
@@ -20,89 +19,70 @@
 namespace evol {
 
 
-void Arena::AddAndOwnLifeform(Lifeform * lf, const Coord & c) {
+void Arena::AddLifeform(Lifeform lf, const Coord & c) {
   lf->SetCoord(c);
-  grid_->At(c).AddLifeform(lf);
-  lifeforms_.emplace_back(lf);
+  grid_.At(c).AddLifeform(lf);
+  lifeforms_.push_back(lf);
 }
 
 
-std::list<Lifeform *> Arena::GetLifeforms(const Coord & c) const {
-  return *(grid_->At(c).Lifeforms());
-}
-
-
-size_t Arena::GetLifeformCount(const Coord &c) const {
-  return grid_->At(c).Lifeforms()->size();
-}
-
-
-void Arena::MoveLifeform(Lifeform * lf, const Coord & c) {
-  grid_->At(lf->GetCoord()).RemoveLifeform(lf);
+void Arena::MoveLifeform(Lifeform lf, const Coord & c) {
+  grid_.At(lf->GetCoord()).RemoveLifeform(lf);
   lf->SetCoord(c);
-  grid_->At(c).AddLifeform(lf);
+  grid_.At(c).AddLifeform(lf);
 }
 
 
 /**
- * Find the lifeform's pointer in our list.  Once it's there, move the
- * unique_ptr to a local temp variable and remove the list element.  Do
- * final cleanup and return the unique_ptr in case the caller wishes to do
- * anything else.
+ * Removes the lifeform from the Arena.  Returns the lifeform if it was
+ * found, otherwise nullptr.
  */
-std::unique_ptr<Lifeform> Arena::KillLifeform(Lifeform * lf) {
-  std::unique_ptr<Lifeform> tmp;
+Lifeform Arena::RemoveLifeform(const Lifeform & lf) {
+  Lifeform ret;
 
   for (auto iter = lifeforms_.begin(); iter != lifeforms_.end(); ++iter) {
-    if (iter->get() == lf) {
-      tmp = std::move(*iter);
+    if (**iter == *lf) {
+      ret = *iter;
       lifeforms_.erase(iter);
       break;
     }
   }
-  if (!tmp) {
-    // Lifeform pointer wasn't found in the master list
-    abort();
-    return nullptr;
-  }
-
-  grid_->At(lf->GetCoord()).RemoveLifeform(lf);
+  grid_.At(lf->GetCoord()).RemoveLifeform(lf);
   lf->SetKilled();
   dead_lifeforms_count_++;
 
-  return tmp;
+  return ret;
 }
 
 
 /**
  * Like KillLifeform(), except:
  *   - pick a lifeform at random
- *   - do not flag lifeform as killed or increment death counters
+ *   - increment death counters
+ *   - Return pointer to lifeform
+ *
+ * Returns nullptr if the arena was empty.
  */
-std::unique_ptr<Lifeform> Arena::RemoveRandomLifeform() {
-  std::unique_ptr<Lifeform> tmp;
-  size_t victim_index = Random::Int32(0, lifeforms_.size() - 1);
-  size_t index = 0;
-  auto iter = lifeforms_.begin();
+Lifeform Arena::RemoveRandomLifeform() {
+  Lifeform ret;
 
-  for (; iter != lifeforms_.end(); ++iter, ++index) {
-    if (index == victim_index) {
-      tmp = std::move(*iter);
-      lifeforms_.erase(iter);
-      break;
-    }
-  }
-  if (!tmp) {
-    abort();
+  size_t numlf = lifeforms_.size();
+  if (numlf < 1) {
+    // Arena is empty
+    return nullptr;
   }
 
-  grid_->At(tmp->GetCoord()).RemoveLifeform(tmp.get());
-  return tmp;
+  auto victim = lifeforms_.begin() + Random::Int32(0, numlf - 1);
+  ret = *victim;
+  grid_.At((*victim)->GetCoord()).RemoveLifeform(*victim);
+  lifeforms_.erase(victim);
+
+  return ret;
 }
 
 
-std::list<Lifeform *> Arena::GetAdjacentLifeforms(const Coord &c) const {
-  std::list<Lifeform *> adjacent;
+std::vector<LifeformImpl *> Arena::GetAdjacentLifeforms(const Coord &c) {
+  std::vector<LifeformImpl *> adjacent;
 
   for (Unit xp = -1; xp <= 1; xp++) {
     for (Unit yp = -1; yp <= 1; yp++) {
@@ -110,8 +90,8 @@ std::list<Lifeform *> Arena::GetAdjacentLifeforms(const Coord &c) const {
         continue;
       }
       Coord t(c.x + xp, c.y + yp);
-      for (auto & lf : *(grid_->At(t).Lifeforms())) {
-        adjacent.push_back(lf);
+      for (auto & lf : grid_.At(t).Lifeforms()) {
+        adjacent.push_back(lf.get());
       }
     }
   }
@@ -120,13 +100,19 @@ std::list<Lifeform *> Arena::GetAdjacentLifeforms(const Coord &c) const {
 }
 
 
-Energy Arena::GetEnergy(const Coord &c) const {
-  return grid_->At(c).GetEnergy();
-}
-
-
-Elevation Arena::GetElevation(const Coord &c) const {
-  return grid_->At(c).GetElevation();
+bool Arena::AdjacentLifeforms(const Coord &c) const {
+  for (Unit xp = -1; xp <= 1; xp++) {
+    for (Unit yp = -1; yp <= 1; yp++) {
+      if (xp == 0 && yp == 0) {
+        continue;
+      }
+      Coord t(c.x + xp, c.y + yp);
+      if (!grid_.At(t).Lifeforms().empty()) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 

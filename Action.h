@@ -22,11 +22,11 @@ namespace evol {
  */
 struct Action {
  public:
-  Action() : actor(nullptr), type(ActionType::NOTHING) {}
-  Action(Lifeform * a, ActionType t) : actor(a), type(t) {}
+  Action() = delete;
+  Action(Lifeform a, ActionType t) : actor(a), type(t) {}
 
   // Lifeform performing this action
-  Lifeform * actor;
+  Lifeform actor;
   // The thing the lifeform wants to do
   ActionType type;
 };

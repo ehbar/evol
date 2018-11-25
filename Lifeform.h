@@ -10,7 +10,9 @@
 #ifndef EVOL_LIFEFORM_H_
 #define EVOL_LIFEFORM_H_
 
+#include <atomic>
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 #include "Coord.h"
@@ -21,29 +23,64 @@ namespace evol {
 
 typedef std::vector<OpCode> Dna;
 
+class LifeformImpl;
 
-class Lifeform {
+typedef std::shared_ptr<LifeformImpl> Lifeform;
+
+/**
+ * Convenience function returns a new lifeform.
+ */
+inline Lifeform make_lifeform(uint64_t gen = 0, Dna dna = Dna{}) {
+  return std::make_shared<LifeformImpl>(gen, dna);
+}
+
+
+class LifeformImpl {
  public:
-  Lifeform(uint64_t gen, const Dna & dna)
-      : gen_(gen), alive_(true), dna_(dna), energy_(1.0) {
-    id_ = ++Lifeform::next_id_;
+  LifeformImpl() {}
+
+  LifeformImpl(const Lifeform &o) = delete;
+
+  LifeformImpl(LifeformImpl && o)
+      : id_(o.id_),
+        gen_(o.gen_),
+        alive_(o.alive_),
+        energy_(o.energy_),
+        coord_(o.coord_),
+        dna_(o.dna_) {
+    o.id_ = 0;
   }
 
-  Lifeform(const Lifeform &) = delete;
-  Lifeform & operator=(const Lifeform &) = delete;
+  LifeformImpl(uint64_t gen, const Dna & dna)
+      : gen_(gen),
+        alive_(true),
+        energy_(1.0),
+        dna_(dna) {
+    id_ = ++LifeformImpl::next_id_;
+  }
+
+  LifeformImpl & operator=(const LifeformImpl & o) {
+    id_ = o.id_;
+    gen_ = o.gen_;
+    alive_ = o.alive_;
+    energy_ = o.energy_;
+    coord_ = o.coord_;
+    dna_ = o.dna_;
+    return *this;
+  }
 
   uint64_t Id() const { return id_; }
   uint64_t Gen() const { return gen_; }
+
   bool Alive() const { return alive_; }
+
   void SetKilled() { alive_ = false; }
 
   /**
-   * Return a new lifeform with Dna equal to the current instance.  The caller
-   * owns the newly created Lifeform and should probably put it in a unique_ptr.
-   * Or they could just leak it.  Some men just want to see the memory fill.
+   * Return a new lifeform with Dna equal to the current instance.
    */
-  Lifeform * MakeChild() {
-    return new Lifeform(gen_ + 1, dna_);
+  Lifeform MakeChild() const {
+    return std::make_shared<LifeformImpl>(gen_ + 1, dna_);
   }
 
   /**
@@ -61,30 +98,37 @@ class Lifeform {
    * deps.  We should fix this.  Might be sane to move DNA processing to its
    * own class, some kind of lifeform VM maybe.
    */
-  ActionType RunDna(const void *);
+  ActionType RunDna(void *);
 
   /**
    * Return copy of the organism's Dna code.
    */
-  Dna GetDna() { return dna_; }
+  Dna GetDna() const { return dna_; }
 
   /**
    * Return size of the organism's Dna code.
    */
-  size_t GetDnaSize() { return dna_.size(); }
+  size_t GetDnaSize() const { return dna_.size(); }
 
   void SetCoord(const Coord & c) {
     coord_ = c;
   }
-  Coord GetCoord() {
+  Coord GetCoord() const {
     return coord_;
   }
 
   void SetEnergy(int32_t new_e) {
     energy_ = new_e;
   }
-  float GetEnergy() {
+  float GetEnergy() const {
     return energy_;
+  }
+
+  bool operator==(const LifeformImpl & o) const {
+    return Id() == o.Id();
+  }
+  bool operator!=(const LifeformImpl & o) const {
+    return Id() != o.Id();
   }
 
  private:
@@ -94,18 +138,14 @@ class Lifeform {
   void MutateChange(int32_t, int32_t);
   void MutateTranslate(int32_t, int32_t);
 
-  static uint64_t next_id_;
+  static std::atomic<uint64_t> next_id_;
 
   uint64_t id_;
   uint64_t gen_;
   bool alive_;
-  Dna dna_;
-
-  // Current energy value of the lifeform
   float energy_;
-
-  // Current coord of the lifeform
   Coord coord_;
+  Dna dna_;
 };
 
 

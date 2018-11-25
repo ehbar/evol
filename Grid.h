@@ -21,15 +21,23 @@ namespace evol {
  * has coordinates (0, 0) at the "top left" or "northwest" corner and (x-1, y-1) at
  * the "bottom right"/"southeast" corner.
  *
- * V must have a default constructor because I suck at C++.
+ * T must have a default constructor because I suck at C++.
  */
-template <typename V>
+template <typename T>
 class Grid {
  public:
   Grid() = delete;
+  Grid(const Grid &) = delete;
+  Grid & operator=(const Grid &) = delete;
+
+  Grid(Grid && o) {
+    xMax_ = o.xMax_;
+    yMax_ = o.yMax_;
+    spaces_.swap(o.spaces_);
+  }
 
   /**
-   * For the constructor, the supplied x and y values should be the
+   * For the main constructor, the supplied x and y values should be the
    * size of the grid, such that (x - 1, y - 1) is the coordinate of the
    * "bottom right".
    */
@@ -43,7 +51,11 @@ class Grid {
   /**
    * Return reference to contained object at the given coords.
    */
-  V & At(const Coord & c) {
+  T & At(const Coord & c) {
+    assert(c.y >= 0 && c.y < yMax_ && c.x >= 0 && c.x < xMax_);
+    return spaces_[c.y * xMax_ + c.x];
+  }
+  const T & At(const Coord & c) const {
     assert(c.y >= 0 && c.y < yMax_ && c.x >= 0 && c.x < xMax_);
     return spaces_[c.y * xMax_ + c.x];
   }
@@ -54,16 +66,16 @@ class Grid {
   /**
    * Normalize the given coordinate to a point wrapped within the grid.
    */
-  Coord * Normalize(Coord * c) {
-    if (c->x >= xMax_) {
-      c->x %= xMax_;
-    } else if (c->x < 0) {
-      c->x = c->x % xMax_ + xMax_;
+  Coord & Normalize(Coord & c) {
+    if (c.x >= xMax_) {
+      c.x %= xMax_;
+    } else if (c.x < 0) {
+      c.x = c.x % xMax_ + xMax_;
     }
-    if (c->y >= yMax_) {
-      c->y %= yMax_;
-    } else if (c->y < 0) {
-      c->y = c->y % yMax_ + yMax_;
+    if (c.y >= yMax_) {
+      c.y %= yMax_;
+    } else if (c.y < 0) {
+      c.y = c.y % yMax_ + yMax_;
     }
 
     return c;
@@ -72,7 +84,7 @@ class Grid {
  private:
   Unit xMax_;
   Unit yMax_;
-  std::vector<V> spaces_;
+  std::vector<T> spaces_;
 };
 
 

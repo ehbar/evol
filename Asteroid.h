@@ -27,7 +27,7 @@ namespace evol {
  * development between arenas.
  *
  * The analogy is to an asteroid which may (or may not) have brought life to the
- * Earth ("panspermia").
+ * Earth (panspermia).
  */
 class Asteroid {
  public:
@@ -36,39 +36,35 @@ class Asteroid {
   }
 
   /**
-   * Put the given lifeform on the "asteroid."  This method takes memory
-   * ownership of the lifeform.
+   * Put the given lifeform on the asteroid.
    */
-  void LaunchLifeform(std::unique_ptr<Lifeform> lf) {
+  void LaunchLifeform(Lifeform lf) {
     std::lock_guard<std::mutex> lg(lifeforms_mutex_);
 
     if (lifeforms_.size() >= max_size_) {
-      // Vector is full, just swap out a random lifeform already on the
-      // asteroid.  The lifeform so removed will be erased.
-      int32_t i = Random::Int32(0, lifeforms_.size() - 1);
-      lifeforms_[i].swap(lf);
-      lf.reset(nullptr);
+      // Vector is full, just overwrite a random lifeform.
+      lifeforms_[Random::Int32(0, lifeforms_.size() - 1)] = lf;
     } else {
-      lifeforms_.push_back(std::move(lf));
+      lifeforms_.push_back(lf);
     }
     ++launched_;
   }
 
   /**
-   * Land a random lifeform from the "asteroid."  Returns the lifeform, or
+   * Land a random lifeform from the asteroid.  Returns the lifeform, or
    * nullptr if the asteroid is empty.
    */
-  std::unique_ptr<Lifeform> LandLifeform() {
+  Lifeform LandLifeform() {
     std::lock_guard<std::mutex> lg(lifeforms_mutex_);
+    Lifeform lf{nullptr};
 
-    if (lifeforms_.empty()) {
-      return nullptr;
+    if (!lifeforms_.empty()) {
+      auto lf_iter = lifeforms_.begin() + Random::Int32(0, lifeforms_.size() - 1);
+      lf = *lf_iter;
+      lifeforms_.erase(lf_iter);
+      ++landed_;
     }
 
-    int32_t i = Random::Int32(0, lifeforms_.size() - 1);
-    std::unique_ptr<Lifeform> lf = std::move(lifeforms_[i]);
-    lifeforms_.erase(lifeforms_.begin() + i);
-    ++landed_;
     return lf;
   }
 
@@ -88,7 +84,7 @@ class Asteroid {
  private:
   const unsigned max_size_;
   std::mutex lifeforms_mutex_;
-  std::vector<std::unique_ptr<Lifeform>> lifeforms_;
+  std::vector<Lifeform> lifeforms_;
 
   uint32_t landed_;
   uint32_t launched_;

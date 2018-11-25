@@ -109,14 +109,13 @@ void CursesRenderer::RenderFrame(const Timer * poll_timer) {
 
       // Get lifeform count summary
       auto & arena = engine.GetArena();
-      num_alive = engine.GetArena().LifeformsCount();
+      num_alive = engine.GetArena().NumLifeforms();
       total_num_alive += num_alive;
-      num_dead = arena.DeadLifeformsCount();
+      num_dead = arena.NumDeadLifeforms();
       total_num_dead += num_dead;
 
       // Get average DNA length
-      auto all_lifeforms = arena.Lifeforms();
-      for (auto & lf : all_lifeforms) {
+      for (auto & lf : arena.Lifeforms()) {
         uint64_t dl = lf->GetDnaSize();
         average_dna_len += dl;
         total_dna_len += dl;
@@ -155,7 +154,7 @@ void CursesRenderer::RenderFrame(const Timer * poll_timer) {
 
     // Print all the timers we collected above
     for (auto & tstats: timer_stats) {
-      snprintf(out, sizeof(out), "%s time (us): %ld avg (%ld/sec excl. overhead), %ld min, %ld max",
+      snprintf(out, sizeof(out), "%s time (1e-6s): %ld avg (%ld/sec excl. overhead), %ld min, %ld max",
                tstats.description.c_str(),
                static_cast<long int>(tstats.us_avg),
                static_cast<long int>(1e6 / tstats.us_avg),
