@@ -95,6 +95,9 @@ void CursesRenderer::RenderFrame(const Timer * poll_timer) {
   // length
   uint64_t total_dna_len = 0;
 
+  // Total loop time is summarized in the footer
+  uint64_t loop_time_sum = 0;
+
   for (EvolEngine & engine : *engines_) {
     uint64_t num_alive = 0;
     uint64_t num_dead = 0;
@@ -139,32 +142,42 @@ void CursesRenderer::RenderFrame(const Timer * poll_timer) {
       stats.lifeforms_count_hiwater = num_alive;
     if (num_alive < stats.lifeforms_count_lowater)
       stats.lifeforms_count_lowater = num_alive;
-    snprintf(out, sizeof(out), "Total lifeforms: %lu living (%lu lo, %lu hi); %lu dead",
-             static_cast<long unsigned>(num_alive),
-             static_cast<long unsigned>(stats.lifeforms_count_lowater),
-             static_cast<long unsigned>(stats.lifeforms_count_hiwater),
-             static_cast<long unsigned>(num_dead));
+    snprintf(out, sizeof(out), "Total lifeforms: %llu living (%llu lo, %llu hi); %llu dead",
+             static_cast<long long unsigned>(num_alive),
+             static_cast<long long unsigned>(stats.lifeforms_count_lowater),
+             static_cast<long long unsigned>(stats.lifeforms_count_hiwater),
+             static_cast<long long unsigned>(num_dead));
     mvaddstr(line++, 4, out);
 
     // Print average Dna size
-    snprintf(out, sizeof(out), "Lifeform average Dna size: %.2f; hi gen %lu",
+    snprintf(out, sizeof(out), "Lifeform average Dna size: %.2f; hi gen %llu",
              average_dna_len,
-             static_cast<long unsigned>(highest_gen));
+             static_cast<long long unsigned>(highest_gen));
     mvaddstr(line++, 4, out);
 
     // Print all the timers we collected above
     for (auto & tstats: timer_stats) {
-      snprintf(out, sizeof(out), "%s time (1e-6s): %ld avg (%ld/sec excl. overhead), %ld min, %ld max",
+      snprintf(out, sizeof(out), "%s time (1e-6s): %llu avg (%llu/sec excl. overhead), %llu min, %llu max",
                tstats.description.c_str(),
-               static_cast<long int>(tstats.us_avg),
-               static_cast<long int>(1e6 / tstats.us_avg),
-               static_cast<long int>(tstats.us_min),
-               static_cast<long int>(tstats.us_max));
+               static_cast<long long unsigned>(tstats.us_avg),
+               static_cast<long long unsigned>(1e6 / tstats.us_avg),
+               static_cast<long long unsigned>(tstats.us_min),
+               static_cast<long long unsigned>(tstats.us_max));
+      if (tstats.description == "Main loop") {
+        loop_time_sum += tstats.us_avg;
+      }
       mvaddstr(line++, 4, out);
     }
     ++line;  // blank space at end
     ++engine_num;
   }
+  auto num_engines = engines_->size();
+  snprintf(out, sizeof(out), "Avg loop time: %llu ms",
+           static_cast<long long unsigned>(loop_time_sum / num_engines));
+  mvaddstr(line, 0, out);
+  snprintf(out, sizeof(out), "Total performance: %llu/sec (excl. overhead)",
+           static_cast<long long unsigned>(num_engines * num_engines * 1e6 / loop_time_sum));
+  mvaddstr(line++, 30, out);
 
   snprintf(out, sizeof(out), "Total lifeforms: %lu living, %lu dead; %.2f avg Dna size",
            static_cast<long unsigned>(total_num_alive),

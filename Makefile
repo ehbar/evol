@@ -4,11 +4,11 @@
 # This program is distributed under the terms of the GNU General Public
 # License Version 3.  See file `COPYING' for details.
 
-BASECPP=-I/usr/local/include -Wall -std=c++17 -fno-rtti -fno-exceptions
+BASECPP=-I/usr/local/include -Wall -std=c++17
 # Debug
-#CPPFLAGS=$(BASECPP) -DDEBUG=1 -g -fno-rtti -fno-exceptions
+#CPPFLAGS=$(BASECPP) -DDEBUG=1 -g
 # Opt
-CPPFLAGS=$(BASECPP) -O3 -fno-rtti -fno-exceptions
+CPPFLAGS=$(BASECPP) -O3
 
 SRCS=Arena.cc Coord.cc EvolEngine.cc Dumper.cc Lifeform.cc Main.cc Random.cc Types.cc
 LDFLAGS=-L. -levol -ljson-c -lpthread
