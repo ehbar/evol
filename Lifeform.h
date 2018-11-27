@@ -125,6 +125,10 @@ class LifeformImpl {
     return Id() != o.Id();
   }
 
+  void SetRandom(std::shared_ptr<Random> r = nullptr) {
+    random_ = r;
+  }
+
  private:
   // See Lifeform.cc for explanations
   void MutateInsert(int32_t, int32_t);

@@ -28,13 +28,15 @@ class Dumper {
  public:
   Dumper() = delete;
 
-  Dumper(std::vector<EvolEngine> * engines, time_t interval = 30)
-        : engines_(engines), dump_interval_secs_(interval), do_exit_(false) {
+  Dumper(std::shared_ptr<std::vector<EvolEngine>> engines, time_t interval = 30)
+        : engines_(engines),
+          engine_locks_(engines->size()),
+          dump_interval_secs_(interval),
+          do_exit_(false) {
     // Build a lock for each engine
-    engine_locks_.resize(engines_->size());
-    for (unsigned i = 0; i < engines_->size(); ++i) {
-      EvolEngine & e = (*engines_)[i];
-      engine_locks_[i] = std::unique_lock<std::mutex>(e.Mutex(), std::defer_lock);
+    auto li = engine_locks_.begin();
+    for (auto ei = engines_->begin(); ei != engines_->end(); ei++, li++) {
+      *li = std::unique_lock<std::mutex>(ei->Mutex(), std::defer_lock);
     }
   }
 
@@ -44,7 +46,7 @@ class Dumper {
   void Start() {
     std::lock_guard<std::mutex> lg(do_exit_mutex_);
     do_exit_ = false;
-    thread_ = std::thread(&Dumper::DumpLoop, this);
+    thread_ = std::thread(&Dumper::Run, this);
   }
 
   /**
@@ -72,11 +74,12 @@ class Dumper {
    * Sleeps dump_interval_secs_ waiting for do_exit_ to be set.  Returns
    * do_exit_ status.
    */
-  bool DidGetExitAfterDelay() {
+  bool WaitOrExit() {
     std::unique_lock<std::mutex> lk(do_exit_mutex_);
-    auto now = std::chrono::system_clock::now();
-    if (do_exit_cv_.wait_until(lk, now + std::chrono::seconds(dump_interval_secs_),
-                               [this](){ return do_exit_; })) {
+    if (do_exit_cv_.wait_for(
+      lk,
+      std::chrono::seconds(dump_interval_secs_),
+                             [this](){ return do_exit_; })) {
       // do_exit_ is set
       return true;
     }
@@ -84,13 +87,13 @@ class Dumper {
     return false;
   }
 
-  void DumpLoop();
+  void Run();
 
  private:
   void DumpAllEngines();
 
   // Engine hooks
-  std::vector<EvolEngine> * engines_;
+  std::shared_ptr<std::vector<EvolEngine>> engines_;
   std::vector<std::unique_lock<std::mutex>> engine_locks_;
 
   // Misc runtime state

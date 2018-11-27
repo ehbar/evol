@@ -24,14 +24,14 @@ namespace evol {
 
 class SFMLRenderer {
  public:
-  SFMLRenderer(std::vector<EvolEngine> * engines = nullptr, Asteroid * asteroid = nullptr, int fps = 30)
+  SFMLRenderer(std::shared_ptr<std::vector<EvolEngine>> engines = nullptr, std::shared_ptr<Asteroid> asteroid = nullptr, int fps = 15)
       : target_fps_(fps),
         did_init_(false),
         engines_(engines),
         asteroid_(asteroid),
-        fontSize_(16) {
-    engine_stats_.resize(engines->size());
-  }
+        engine_stats_(engines->size()),
+        fontSize_(16) {}
+
   ~SFMLRenderer() { Cleanup(); };
 
   SFMLRenderer(const SFMLRenderer &) = delete;
@@ -50,13 +50,12 @@ class SFMLRenderer {
     PanelView() : target(PanelViewTarget::OVERVIEW), engine_number(0) {}; 
   };
 
-
   // General state
   int target_fps_;
   bool did_init_;
-  std::vector<EvolEngine> * engines_;
+  std::shared_ptr<std::vector<EvolEngine>> engines_;
+  std::shared_ptr<Asteroid> asteroid_;
   std::vector<LifeformWatermarks> engine_stats_;
-  Asteroid * asteroid_;
 
   // What the user wants to see
   PanelView panel_view_;

@@ -27,9 +27,9 @@ static const char * kDumperFilename = "lifeform-dump.json";
 /**
  * Entry point and main loop for the Dumper thread.
  */
-void Dumper::DumpLoop() {
+void Dumper::Run() {
   for (;;) {
-    if (DidGetExitAfterDelay()) {
+    if (WaitOrExit()) {
       break;
     }
     DumpAllEngines();

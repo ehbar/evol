@@ -144,7 +144,7 @@ void SFMLRenderer::RenderOverview() {
         dna_count += lf->GetDnaSize();
         highest_gen = std::max(highest_gen, lf->Gen());
       }
-      tstats = e.GetTimers().front()->GetStats();  // theoretically this returns multiple timers, implement one for now
+      tstats = e.GetTimer().GetStats();
     }
 
     sf::Color black(0, 0, 0);
@@ -212,7 +212,7 @@ void SFMLRenderer::HandleKey(const sf::Event & event) {
     // Shift key adds 10 for 10-19, ctrl adds 20 for 20-29, both will add 30 for
     // 30-39
     size_t engine_num = static_cast<size_t>(event.key.code) - static_cast<size_t>(sf::Keyboard::Num0);
-    assert(engine_num >= 0);
+    assert(engine_num < engines_->size());
     if (event.key.shift) {
       engine_num += 10;
     }

@@ -45,6 +45,7 @@ class Asteroid {
       // Vector is full, just overwrite a random lifeform.
       lifeforms_[random_.Int32(0, lifeforms_.size() - 1)] = lf;
     } else {
+      lf->SetRandom(nullptr);  // clear RNG which is thread-local
       lifeforms_.push_back(lf);
     }
     ++launched_;

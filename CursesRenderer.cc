@@ -76,7 +76,6 @@ void CursesRenderer::RenderFrame(const Timer * poll_timer) {
   int engine_num = 0;
   int line = 0;
   char out[256];
-  std::forward_list<TimerStats> timer_stats;
 
   // Print meta-collection stats at the top (how long it took us to ask all the
   // engines for data)
@@ -103,8 +102,7 @@ void CursesRenderer::RenderFrame(const Timer * poll_timer) {
     uint64_t num_dead = 0;
     uint64_t highest_gen = 0;
     float average_dna_len = 0;
-
-    timer_stats.clear();
+    TimerStats timer_stats;
 
     {
       // Lock the engine.  Clock is ticking now!
@@ -126,10 +124,7 @@ void CursesRenderer::RenderFrame(const Timer * poll_timer) {
       }
       average_dna_len /= num_alive;
 
-      // Get timer stats
-      for (auto & timer : engine.GetTimers()) {
-        timer_stats.push_front(timer->GetStats());
-      }
+      timer_stats = engine.GetTimer().GetStats();
     }
     // Engine unlocked; we can do the slow stuff now
 
@@ -137,15 +132,15 @@ void CursesRenderer::RenderFrame(const Timer * poll_timer) {
     mvaddstr(line++, 0, out);
 
     // Print lifeform count summary & hi/lo-water marks
-    LifeformWatermarks & stats = engine_stats_[engine_num];
-    if (num_alive > stats.lifeforms_count_hiwater)
-      stats.lifeforms_count_hiwater = num_alive;
-    if (num_alive < stats.lifeforms_count_lowater)
-      stats.lifeforms_count_lowater = num_alive;
+    LifeformWatermarks & lf_stats = engine_stats_[engine_num];
+    if (num_alive > lf_stats.lifeforms_count_hiwater)
+      lf_stats.lifeforms_count_hiwater = num_alive;
+    if (num_alive < lf_stats.lifeforms_count_lowater)
+      lf_stats.lifeforms_count_lowater = num_alive;
     snprintf(out, sizeof(out), "Total lifeforms: %llu living (%llu lo, %llu hi); %llu dead",
              static_cast<long long unsigned>(num_alive),
-             static_cast<long long unsigned>(stats.lifeforms_count_lowater),
-             static_cast<long long unsigned>(stats.lifeforms_count_hiwater),
+             static_cast<long long unsigned>(lf_stats.lifeforms_count_lowater),
+             static_cast<long long unsigned>(lf_stats.lifeforms_count_hiwater),
              static_cast<long long unsigned>(num_dead));
     mvaddstr(line++, 4, out);
 
@@ -155,19 +150,16 @@ void CursesRenderer::RenderFrame(const Timer * poll_timer) {
              static_cast<long long unsigned>(highest_gen));
     mvaddstr(line++, 4, out);
 
-    // Print all the timers we collected above
-    for (auto & tstats: timer_stats) {
-      snprintf(out, sizeof(out), "%s time (1e-6s): %llu avg (%llu/sec excl. overhead), %llu min, %llu max",
-               tstats.description.c_str(),
-               static_cast<long long unsigned>(tstats.us_avg),
-               static_cast<long long unsigned>(1e6 / tstats.us_avg),
-               static_cast<long long unsigned>(tstats.us_min),
-               static_cast<long long unsigned>(tstats.us_max));
-      if (tstats.description == "Main loop") {
-        loop_time_sum += tstats.us_avg;
-      }
-      mvaddstr(line++, 4, out);
-    }
+    // Print engine loop timer stats
+    snprintf(out, sizeof(out), "%s time (1e-6s): %llu avg (%llu/sec excl. overhead), %llu min, %llu max",
+              timer_stats.description.c_str(),
+              static_cast<long long unsigned>(timer_stats.us_avg),
+              static_cast<long long unsigned>(1e6 / timer_stats.us_avg),
+              static_cast<long long unsigned>(timer_stats.us_min),
+              static_cast<long long unsigned>(timer_stats.us_max));
+    loop_time_sum += timer_stats.us_avg;
+    mvaddstr(line++, 4, out);
+
     ++line;  // blank space at end
     ++engine_num;
   }

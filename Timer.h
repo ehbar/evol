@@ -50,8 +50,29 @@ class Timer {
   Timer() : sample_count_(0), sample_index_(0) {}
   Timer(const std::string & desc) : description_(desc), sample_count_(0), sample_index_(0) {}
 
-  Timer(const Timer &) = delete;
-  Timer & operator=(const Timer &) = delete;
+  Timer(const Timer &o) {
+    std::lock_guard our_lock(mutex_);
+    std::lock_guard their_lock(o.mutex_);
+
+    description_ = o.description_;
+    start_ = o.start_;
+    sample_count_ = o.sample_count_;
+    sample_index_ = o.sample_index_;
+    samples_ = o.samples_;
+  }
+
+  Timer & operator=(const Timer &o) {
+    std::lock_guard our_lock(mutex_);
+    std::lock_guard their_lock(o.mutex_);
+
+    description_ = o.description_;
+    start_ = o.start_;
+    sample_count_ = o.sample_count_;
+    sample_index_ = o.sample_index_;
+    samples_ = o.samples_;
+
+    return *this;
+  }
 
   void StartCollection() {
     timeval now;
@@ -139,7 +160,7 @@ class Timer {
  private:
   static constexpr int kCircularBufferSamples = 1000;
 
-  const std::string description_;
+  std::string description_;
   struct timeval start_;
   int sample_count_;
   int sample_index_;

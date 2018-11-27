@@ -40,18 +40,18 @@ int main(/*int argc, char *argv[]*/) {
   Coord::SetGlobalBounds(Params::kWidth, Params::kHeight);
 
   // Create asteroid and engines
-  std::vector<EvolEngine> engines(numCores);
   std::vector<std::thread> engine_threads(numCores);
-  auto asteroid = std::make_shared<Asteroid>(Params::kAsteroidSize);
+  auto engines{std::make_shared<std::vector<EvolEngine>>(numCores)};
+  auto asteroid{std::make_shared<Asteroid>(Params::kAsteroidSize)};
 
   for (unsigned i = 0; i < numCores; ++i) {
-    engines[i] = EvolEngine(Params::kWidth, Params::kHeight, asteroid);
-    engines[i].Seed(Params::kStartingLifeforms);
-    engine_threads[i] = std::thread(&EvolEngine::Run, &engines[i]);  // vroom!
+    engines->at(i) = EvolEngine(Params::kWidth, Params::kHeight, asteroid);
+    engines->at(i).Seed(Params::kStartingLifeforms);
+    engine_threads[i] = std::thread(&EvolEngine::Run, &engines->at(i));  // vroom!
   }
 
   // Thread which dumps lifeforms to JSON output every few seconds
-  Dumper dumper(&engines, Params::kJsonDumpIntervalSeconds);
+  Dumper dumper(engines, Params::kJsonDumpIntervalSeconds);
 #if EVOL_RENDERER_CURSES || EVOL_RENDERER_SFML
   // Dumper is also disabled if no renderer used
   dumper.Start();
@@ -59,31 +59,25 @@ int main(/*int argc, char *argv[]*/) {
 
   // Renderer thread; this updates the screen and waits for user quit
 #if EVOL_RENDERER_CURSES
-  CursesRenderer renderer(&engines, asteroid, 15);
+  CursesRenderer renderer(engines, asteroid, 15);
 #elif EVOL_RENDERER_SFML
-  SFMLRenderer renderer(&engines, asteroid, 15);
+  SFMLRenderer renderer(engines, asteroid, 15);
 #endif
 #if EVOL_RENDERER_CURSES || EVOL_RENDERER_SFML
   renderer.Init();
   renderer.Run();
 #else
   // Fallback for no renderer (useful for gdb)
-  for (;;) {
-    sleep(1);
-  }
+  std::string foo;
+  std::cin >> foo;
 #endif
 
-#if EVOL_RENDERER_CURSES || EVOL_RENDERER_SFML
   dumper.DoExit();
-#endif
+  dumper.JoinThread();
 
   for (unsigned i = 0; i < numCores; ++i) {
-    engines[i].DoExit();
+    engines->at(i).DoExit();
   }
-
-#if EVOL_RENDERER_CURSES || EVOL_RENDERER_SFML
-  dumper.JoinThread();
-#endif
 
   for (unsigned i = 0; i < numCores; ++i) {
     engine_threads[i].join();

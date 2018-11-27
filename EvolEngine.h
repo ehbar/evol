@@ -32,8 +32,6 @@ namespace evol {
 
 typedef std::unordered_map<Coord, std::vector<Action>> ActionMap;
 
-typedef std::forward_list<std::shared_ptr<Timer>> TimerList;
-
 class EvolEngine {
  public:
   EvolEngine()
@@ -41,13 +39,15 @@ class EvolEngine {
         random_(nullptr),
         arena_(nullptr),
         asteroid_(nullptr),
-        turns_(0) {}
+        turns_(0),
+        timer_() {}
 
   EvolEngine(int width, int height, std::shared_ptr<Asteroid> asteroid)
       : do_exit_(false),
         random_(nullptr),
         asteroid_(asteroid),
-        turns_(0) {
+        turns_(0),
+        timer_("Main loop") {
     random_ = std::make_shared<Random>();
     arena_.reset(new Arena(width, height, random_));
   }
@@ -66,9 +66,8 @@ class EvolEngine {
     random_ = std::move(other.random_);
     arena_ = std::move(other.arena_);
     asteroid_ = std::move(other.asteroid_);
-    turns_ = other.turns_;
-    timers_ = std::move(other.timers_);
-    other.turns_ = 0;
+    std::swap(turns_, other.turns_);
+    timer_ = std::move(other.timer_);
 
     return *this;
   }
@@ -104,9 +103,9 @@ class EvolEngine {
   const Arena & GetArena() const { return *arena_.get(); }
 
   /**
-   * Returns const reference to the timers created by the engine.
+   * Returns const reference to the timer created by the engine.
    */
-  const TimerList & GetTimers() const { return timers_; }
+  const Timer & GetTimer() const { return timer_; }
 
  private:
   // Loop condition for Run().
@@ -123,11 +122,11 @@ class EvolEngine {
   // Number of turns since start of simulation
   uint64_t turns_;
 
-  // List of timers currently in use by the program
-  TimerList timers_;
+  // Main loop timer
+  Timer timer_;
 
   /**
-   *  The engine mutex is held whenever the engine reserves the right to
+   * The engine mutex is held whenever the engine reserves the right to
    * change state information (member objects such as arena, lifeforms, etc.).
    * It will also be held by outside threads which want to read this
    * information, like the renderer.  Because it is a single point of

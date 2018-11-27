@@ -33,7 +33,7 @@ default: opt
 opt: CPPFLAGS += -O3
 opt: $(BIN)
 
-dbg: CPPFLAGS += -DDEBUG=1 -ggdb -fsanitize=thread -fsanitize=undefined
+dbg: CPPFLAGS += -O1 -DDEBUG=1 -ggdb -fsanitize=thread -fsanitize=undefined
 dbg: $(BIN)
 
 $(BIN): $(LIB) .depend

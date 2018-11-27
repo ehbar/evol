@@ -32,18 +32,11 @@ void EvolEngine::Seed(unsigned num_lifeforms) {
 
 
 void EvolEngine::Run() {
-  auto loop_timer = std::make_shared<Timer>("Main loop");
-
-  {
-    std::lock_guard<std::mutex> lg(mutex_);
-    timers_.push_front(loop_timer);
-  }
-
   while (!do_exit_) {
     std::unique_lock<std::mutex> vl(mutex_, std::defer_lock);
 
     // Start main loop timer
-    loop_timer->StartCollection();
+    timer_.StartCollection();
 
     // Run each Lifeform's Dna and get its resulting action.  These actions
     // make no change to the arena and will be resolved later in the loop
@@ -79,21 +72,16 @@ void EvolEngine::Run() {
     if (asteroid_ && Params::kLifeformAsteroidLandInterval != 0 && turns_ % Params::kLifeformAsteroidLandInterval == 0) {
       auto lf = asteroid_->LandLifeform();
       if (lf) {
+        lf->SetRandom(random_);  // give this our local RNG state
         Coord c(arena_->GetRandomCoordOnArena());
         arena_->AddLifeform(lf, c);
       }
     }
 
     // End main loop timer
-    loop_timer->EndCollection();
+    timer_.EndCollection();
     ++turns_;
     vl.unlock();
-  }
-
-  {
-    // Lock block
-    std::lock_guard<std::mutex> lg(mutex_);
-    timers_.clear();
   }
 }
 
