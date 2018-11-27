@@ -27,8 +27,6 @@ using namespace evol;
 
 
 int main(int argc, char *argv[]) {
-
-#if EVOL_RENDERER_CURSES || EVOL_RENDERER_SFML
   unsigned numCores = Params::kNumEngines;
   if (numCores < 1) {
     numCores = std::thread::hardware_concurrency();
@@ -37,9 +35,6 @@ int main(int argc, char *argv[]) {
       numCores = 1;
     }
   }
-#else
-  unsigned numCores = 1;
-#endif
 
   std::vector<EvolEngine> engines(numCores);
   std::vector<std::thread> engine_threads(numCores);

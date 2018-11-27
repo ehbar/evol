@@ -4,19 +4,17 @@
 # This program is distributed under the terms of the GNU General Public
 # License Version 3.  See file `COPYING' for details.
 
-BASECPP=-I/usr/local/include -Wall -std=c++17
-# Debug
-#CPPFLAGS=$(BASECPP) -DDEBUG=1 -g
-# Opt
-CPPFLAGS=$(BASECPP) -O3
+CPPFLAGS=-I/usr/local/include -Wall -std=c++17
 
 SRCS=Arena.cc Coord.cc EvolEngine.cc Dumper.cc Lifeform.cc Main.cc Random.cc Types.cc
 LDFLAGS=-L. -levol -ljson-c -lpthread
-# SFML
+
+# Uncomment for SFML renderer
 #LDFLAGS += -lsfml-window -lsfml-graphics -lsfml-system
 #CPPFLAGS += -DEVOL_RENDERER_SFML=1
 #SRCS += SFMLRenderer.cc
-# Curses
+
+# Uncomment for Curses renderer
 LDFLAGS += -ltinfo -lncurses
 CPPFLAGS += -DEVOL_RENDERER_CURSES
 SRCS += CursesRenderer.cc
@@ -28,7 +26,15 @@ OBJS=$(LIBOBJS) Main.o
 BIN=evol
 LIB=libevol.a
 
-.PHONY: bin lib clean distclean test
+.PHONY: default opt dbg clean distclean
+
+default: opt
+
+opt: CPPFLAGS += -O3
+opt: clean $(BIN)
+
+dbg: CPPFLAGS += -DDEBUG=1 -g
+dbg: clean bin
 
 $(BIN): $(LIB) .depend
 	$(CXX) $(CPPFLAGS) Main.cc -o $(BIN) $(LDFLAGS)
@@ -36,24 +42,13 @@ $(BIN): $(LIB) .depend
 $(LIB): $(LIBOBJS)
 	ar -r $(LIB) $(LIBOBJS)
 
-bin: $(BIN)
-
-lib: $(LIB)
-
 .depend: $(SRCS)
 	$(CXX) $(CPPFLAGS) $(CFLAGS) -MM $^ > ./.depend
 
 include .depend
-
-test/evol-test: $(LIB)
-	$(MAKE) -C test
-
-test: test/evol-test
-	test/evol-test
 
 clean:
 	rm -fv $(BIN) $(LIB) $(OBJS) Main.o gmon.out
 
 distclean: clean
 	rm -fv ./.depend
-	$(MAKE) -C test distclean
