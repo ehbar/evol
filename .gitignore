@@ -7,5 +7,6 @@
 gmon.out
 evol
 core
+vgcore.*
 libevol.a
 evol-test

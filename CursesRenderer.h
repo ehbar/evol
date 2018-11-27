@@ -23,7 +23,7 @@ namespace evol {
  */
 class CursesRenderer {
  public:
-  CursesRenderer(std::vector<EvolEngine> * engines = nullptr, Asteroid * asteroid = nullptr, int fps = 60)
+  CursesRenderer(std::vector<EvolEngine> * engines = nullptr, std::shared_ptr<Asteroid> asteroid = nullptr, int fps = 60)
       : target_fps_(fps),
         did_init_(false),
         engines_(engines),
@@ -44,7 +44,7 @@ class CursesRenderer {
   bool did_init_;
   std::vector<EvolEngine> * engines_;
   std::vector<LifeformWatermarks> engine_stats_;
-  Asteroid * asteroid_;
+  std::shared_ptr<Asteroid> asteroid_;
 
   void RenderFrame(const Timer *);
 };

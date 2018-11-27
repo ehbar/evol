@@ -4,9 +4,9 @@
 # This program is distributed under the terms of the GNU General Public
 # License Version 3.  See file `COPYING' for details.
 
-CPPFLAGS=-I/usr/local/include -Wall -std=c++17
+CPPFLAGS=-I/usr/local/include -std=c++17 -Wall -Wextra -Werror -Wno-unused-parameter -g
 
-SRCS=Arena.cc Coord.cc EvolEngine.cc Dumper.cc Lifeform.cc Main.cc Random.cc Types.cc
+SRCS=Arena.cc Coord.cc EvolEngine.cc Dumper.cc Lifeform.cc Main.cc Types.cc
 LDFLAGS=-L. -levol -ljson-c -lpthread
 
 # Uncomment for SFML renderer
@@ -33,7 +33,7 @@ default: opt
 opt: CPPFLAGS += -O3
 opt: $(BIN)
 
-dbg: CPPFLAGS += -DDEBUG=1 -g
+dbg: CPPFLAGS += -DDEBUG=1 -ggdb -fsanitize=thread -fsanitize=undefined
 dbg: $(BIN)
 
 $(BIN): $(LIB) .depend

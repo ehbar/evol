@@ -16,7 +16,9 @@
 #include <algorithm>  // std::min/max
 #include <array>
 #include <cstdint>
+#include <mutex>
 #include <string>
+
 
 namespace evol {
 
@@ -34,11 +36,14 @@ struct TimerStats {
   int64_t us_avg;        // average sample time (microseconds)
 };
 
-
 /**
  * The Timer class is used to collect and digest statistics on a timed portion
  * of the program.  A different instance should be used for each code section to
  * be measured.  Somewhat Linux-specific.
+ *
+ * This class is designed to be very fast under concurrent access.  It uses a
+ * per-instance mutex, which is locked as short a time as possible while data
+ * is copied in or out.
  */
 class Timer {
  public:
@@ -49,8 +54,14 @@ class Timer {
   Timer & operator=(const Timer &) = delete;
 
   void StartCollection() {
-    if (gettimeofday(&start_, nullptr) < 0) {
+    timeval now;
+    if (gettimeofday(&now, nullptr) < 0)
       abort();
+
+    {
+      // Lock block
+      std::lock_guard<std::mutex> lg_(mutex_);
+      start_ = now;
     }
   }
 
@@ -60,21 +71,25 @@ class Timer {
     if (gettimeofday(&end, nullptr) < 0)
       abort();
 
-    int64_t us = (end.tv_sec * 1e6 + end.tv_usec) - (start_.tv_sec * 1e6 + start_.tv_usec);
-    if (us < 0)
-      abort();  // time travel?!
-    samples_[sample_index_] = us;
+    {
+      // Lock block
+      std::lock_guard<std::mutex> lg_(mutex_);
 
-    ++sample_index_;
-    if (sample_index_ >= kCircularBufferSamples) {
-      // Circular buffer end reached, wrap to front
-      sample_index_ -= kCircularBufferSamples;
-    }
+      int64_t us = (end.tv_sec * 1e6 + end.tv_usec) - (start_.tv_sec * 1e6 + start_.tv_usec);
+      if (us < 0) {
+        // Clock changed, skip this sample
+        return;
+      }
 
-    ++sample_count_;
-    if (sample_count_ >= kCircularBufferSamples) {
-      // We'll never have more samples than the buffer size
-      sample_count_ = kCircularBufferSamples;
+      samples_[sample_index_] = us;
+      if (++sample_index_ >= kCircularBufferSamples) {
+        // Circular buffer end reached, wrap to front
+        sample_index_ -= kCircularBufferSamples;
+      }
+      if (++sample_count_ >= kCircularBufferSamples) {
+        // We'll never have more samples than the buffer size
+        sample_count_ = kCircularBufferSamples;
+      }
     }
   }
 
@@ -91,20 +106,31 @@ class Timer {
       return stats;
     }
 
+    // Copy samples and count out of the instance as quickly as possible
+    // since we hold the mutex while doing so
+    decltype(samples_) samples;
+    decltype(sample_count_) sample_count;
+    {
+      // Lock block
+      std::lock_guard<std::mutex> lg_(mutex_);
+      samples = samples_;
+      sample_count = sample_count_;
+    }
+
     int64_t sum = 0, min = INT64_MAX, max = INT64_MIN;
-    for (int i = 0; i < sample_count_; ++i) {
+    for (int i = 0; i < sample_count; ++i) {
       sum += samples_[i];
-      min = std::min(min, samples_[i]);
-      max = std::max(max, samples_[i]);
+      min = std::min(min, samples[i]);
+      max = std::max(max, samples[i]);
     }
     if (sum < 0 || min < 0 || max < 0)
       abort();
 
-    stats.description = description_;
-    stats.sample_count = sample_count_;
+    stats.description = description_;  // this is not in the mutex but we do not expect it to change
+    stats.sample_count = sample_count;
     stats.us_min = min;
     stats.us_max = max;
-    stats.us_avg = sum / sample_count_;
+    stats.us_avg = sum / sample_count;
 
     return stats;
   }
@@ -113,10 +139,11 @@ class Timer {
  private:
   static constexpr int kCircularBufferSamples = 1000;
 
-  std::string description_;
+  const std::string description_;
   struct timeval start_;
   int sample_count_;
   int sample_index_;
+  mutable std::mutex mutex_;
   std::array<int64_t, kCircularBufferSamples> samples_;
 };
 

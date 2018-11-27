@@ -11,10 +11,8 @@
 #define EVOL_EVOL_ENGINE_H_
 
 #include <stdlib.h>
-
 #include <atomic>
 #include <cstdint>
-#include <ctime>
 #include <forward_list>
 #include <list>
 #include <memory>
@@ -26,6 +24,7 @@
 #include "Asteroid.h"
 #include "Arena.h"
 #include "Params.h"
+#include "Random.h"
 #include "Timer.h"
 
 namespace evol {
@@ -33,17 +32,25 @@ namespace evol {
 
 typedef std::unordered_map<Coord, std::vector<Action>> ActionMap;
 
+typedef std::forward_list<std::shared_ptr<Timer>> TimerList;
 
 class EvolEngine {
  public:
   EvolEngine()
-      : do_exit_(true), arena_(nullptr), turns_(0), asteroid_(nullptr) {}
+      : do_exit_(true),
+        random_(nullptr),
+        arena_(nullptr),
+        asteroid_(nullptr),
+        turns_(0) {}
 
-  EvolEngine(int width, int height, Asteroid * asteroid = nullptr)
+  EvolEngine(int width, int height, std::shared_ptr<Asteroid> asteroid)
       : do_exit_(false),
-        arena_(new Arena(width, height)),
-        turns_(0),
-        asteroid_(asteroid) {}
+        random_(nullptr),
+        asteroid_(asteroid),
+        turns_(0) {
+    random_ = std::make_shared<Random>();
+    arena_.reset(new Arena(width, height, random_));
+  }
 
   EvolEngine & operator=(EvolEngine && other) {
     if (!do_exit_)
@@ -56,13 +63,12 @@ class EvolEngine {
     std::lock_guard<std::mutex> lgt(mutex_, std::adopt_lock);
     std::lock_guard<std::mutex> lgo(other.mutex_, std::adopt_lock);
 
+    random_ = std::move(other.random_);
     arena_ = std::move(other.arena_);
+    asteroid_ = std::move(other.asteroid_);
     turns_ = other.turns_;
-    timers_.clear();  // these don't move; list is kept for export
-    asteroid_ = other.asteroid_;
+    timers_ = std::move(other.timers_);
     other.turns_ = 0;
-    other.timers_.clear();
-    other.asteroid_ = nullptr;
 
     return *this;
   }
@@ -98,31 +104,37 @@ class EvolEngine {
   const Arena & GetArena() const { return *arena_.get(); }
 
   /**
-   * Gets pointer to the list of timers the engine is using.
+   * Returns const reference to the timers created by the engine.
    */
-  const std::list<const Timer *> & GetTimers() const { return timers_; }
+  const TimerList & GetTimers() const { return timers_; }
 
  private:
   // Loop condition for Run().
   std::atomic<bool> do_exit_;
 
+  // Thread-local random number generator
+  std::shared_ptr<Random> random_;
+
+  // Game pieces: The arena
   std::unique_ptr<Arena> arena_;
+  // The asteroid exchanges lifeforms between engines
+  std::shared_ptr<Asteroid> asteroid_;
 
   // Number of turns since start of simulation
   uint64_t turns_;
 
   // List of timers currently in use by the program
-  std::list<const Timer *> timers_;
+  TimerList timers_;
 
-  // The mutex is held whenever the engine reserves the right to change state
-  // information (member objects such as arena, lifeforms, etc.).  It will
-  // also be held by outside threads which want to read this information, like
-  // the renderer.  Because it is a single point of contention every user should
-  // strive to minimize the time this lock is held.
+  /**
+   *  The engine mutex is held whenever the engine reserves the right to
+   * change state information (member objects such as arena, lifeforms, etc.).
+   * It will also be held by outside threads which want to read this
+   * information, like the renderer.  Because it is a single point of
+   * contention, every user should strive to minimize the time this lock is
+   * held.
+   */
   std::mutex mutex_;
-
-  // External Asteroid object (for moving lifeforms between engines).
-  Asteroid * asteroid_;
 
   /**
    * Post-Dna processing, this method will collate a list of Actions decided by

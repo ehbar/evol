@@ -32,8 +32,14 @@ namespace evol {
 class Arena {
  public:
   Arena() = delete;
-  Arena(Unit w, Unit h) : width_(w), height_(h), dead_lifeforms_count_(0), grid_(Grid<ArenaBlock>(w, h)) {
+  Arena(Unit w, Unit h, std::shared_ptr<Random> random)
+      : width_(w),
+        height_(h),
+        dead_lifeforms_count_(0),
+        random_(random),
+        grid_(Grid<ArenaBlock>(w, h)) {
     assert(w > 0 && h > 0);
+    assert(random);  // this assert found a bug that 3 hours of gdb did not -- keep it here
   }
 
   Arena(const Arena &) = delete;
@@ -116,16 +122,16 @@ class Arena {
    * Utility method: Return a coord guaranteed to be in the bounds of this arena
    */
   Coord GetRandomCoordOnArena() const {
-    return Coord(Random::Int32(0, width_ - 1),
-                 Random::Int32(0, height_ - 1));
+    return Coord(random_->Int32(0, width_ - 1),
+                 random_->Int32(0, height_ - 1));
   }
 
  private:
   Unit width_;
   Unit height_;
   uint64_t dead_lifeforms_count_;
-
   std::vector<Lifeform> lifeforms_;
+  mutable std::shared_ptr<Random> random_;
 
   // Grid of ArenaBlocks representing the "physical" space.
   Grid<ArenaBlock> grid_;

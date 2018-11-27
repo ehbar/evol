@@ -109,7 +109,7 @@ ActionType LifeformImpl::RunDna(void *arena__) {
       case OpCode::FINAL_MOVE_RANDOM:
         // Pick random direction
         energy_ -= Params::kRandomMoveCost;  // TODO: This shouldn't be in the DNA processing
-        return static_cast<ActionType>(Random::Int32(kActionMoveBegin, kActionMoveEnd));
+        return static_cast<ActionType>(random_->Int32(kActionMoveBegin, kActionMoveEnd));
 
       // JMP & friends
       case OpCode::JMP1:
@@ -167,20 +167,20 @@ void LifeformImpl::Mutate() {
   //   - Do that mutation
 
   int mutations = 0;
-  int32_t d100 = Random::Int32(0, Params::kMutationDieRoll);
+  int32_t d100 = random_->Int32(0, Params::kMutationDieRoll);
   if (d100 >= Params::kOneMutation)
     mutations = 1;
   if (d100 >= Params::kTwoMutations)
     mutations = 2;
 
   for (int i = 0; i < mutations; i++) {
-    int32_t mutation_start = Random::Int32(0, dna_.size());
+    int32_t mutation_start = random_->Int32(0, dna_.size());
     // randomly generated mutation_len must be guaranteed never to be past the
     // end of Dna -- this greatly simplifies the mutation implementations
-    int32_t mutation_len = Random::Int32(0, std::min(Params::kMaxMutationLength, static_cast<int32_t>(dna_.size()) - mutation_start));
+    int32_t mutation_len = random_->Int32(0, std::min(Params::kMaxMutationLength, static_cast<int32_t>(dna_.size()) - mutation_start));
     if (mutation_len < 1 || mutation_start == static_cast<int32_t>(dna_.size()))
       return;
-    int32_t mutation_type = Random::Int32(0, 3);
+    int32_t mutation_type = random_->Int32(0, 3);
     switch (mutation_type) {
       case 0:
         MutateInsert(mutation_len, mutation_start);
@@ -227,7 +227,7 @@ void LifeformImpl::MutateChange(int32_t mutation_len, int32_t mutation_start) {
   auto start = dna_.begin() + mutation_start;
   auto end = start + mutation_len;
   for (auto oc = start; oc < end; oc++) {
-    *oc = static_cast<OpCode>(Random::Int32(kOpcodeBegin, kOpcodeEnd));
+    *oc = static_cast<OpCode>(random_->Int32(kOpcodeBegin, kOpcodeEnd));
   }
 }
 
@@ -244,7 +244,7 @@ void LifeformImpl::MutateTranslate(int32_t mutation_len, int32_t mutation_start)
   auto s_start = dna_.begin() + mutation_start;
   auto s_end = s_start + mutation_len;
 
-  auto t_start = dna_.begin() + Random::Int32(0, dna_.size() - mutation_len);
+  auto t_start = dna_.begin() + random_->Int32(0, dna_.size() - mutation_len);
   if (t_start == s_start)
     return;
   auto t_end = t_start + mutation_len;

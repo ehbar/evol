@@ -72,7 +72,7 @@ Lifeform Arena::RemoveRandomLifeform() {
     return nullptr;
   }
 
-  auto victim = lifeforms_.begin() + Random::Int32(0, numlf - 1);
+  auto victim = lifeforms_.begin() + random_->Int32(0, numlf - 1);
   ret = *victim;
   grid_.At((*victim)->GetCoord()).RemoveLifeform(*victim);
   lifeforms_.erase(victim);

@@ -43,7 +43,7 @@ class Asteroid {
 
     if (lifeforms_.size() >= max_size_) {
       // Vector is full, just overwrite a random lifeform.
-      lifeforms_[Random::Int32(0, lifeforms_.size() - 1)] = lf;
+      lifeforms_[random_.Int32(0, lifeforms_.size() - 1)] = lf;
     } else {
       lifeforms_.push_back(lf);
     }
@@ -59,7 +59,7 @@ class Asteroid {
     Lifeform lf{nullptr};
 
     if (!lifeforms_.empty()) {
-      auto lf_iter = lifeforms_.begin() + Random::Int32(0, lifeforms_.size() - 1);
+      auto lf_iter = lifeforms_.begin() + random_.Int32(0, lifeforms_.size() - 1);
       lf = *lf_iter;
       lifeforms_.erase(lf_iter);
       ++landed_;
@@ -85,6 +85,7 @@ class Asteroid {
   const unsigned max_size_;
   std::mutex lifeforms_mutex_;
   std::vector<Lifeform> lifeforms_;
+  mutable Random random_;
 
   uint32_t landed_;
   uint32_t launched_;

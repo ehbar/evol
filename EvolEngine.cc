@@ -11,15 +11,10 @@
 
 #include <sys/time.h>
 #include <unistd.h>
-
 #include <cstring>
-#include <memory>
 
-#include "Action.h"
 #include "Coord.h"
 #include "Lifeform.h"
-#include "Random.h"
-#include "Timer.h"
 #include "Types.h"
 
 namespace evol {
@@ -29,7 +24,7 @@ void EvolEngine::Seed(unsigned num_lifeforms) {
   for (unsigned i = 0; i < num_lifeforms; i++) {
     for (;;) {
       Coord c = arena_->GetRandomCoordOnArena();
-      arena_->AddLifeform(make_lifeform(0, Dna {OpCode::FINAL_MOVE_RANDOM}), c);
+      arena_->AddLifeform(make_lifeform(0, Dna {OpCode::FINAL_MOVE_RANDOM}, random_), c);
       break;
     }
   }
@@ -37,18 +32,18 @@ void EvolEngine::Seed(unsigned num_lifeforms) {
 
 
 void EvolEngine::Run() {
-  Timer loop_timer("Main loop");
+  auto loop_timer = std::make_shared<Timer>("Main loop");
 
   {
     std::lock_guard<std::mutex> lg(mutex_);
-    timers_.assign({&loop_timer});
+    timers_.push_front(loop_timer);
   }
 
   while (!do_exit_) {
     std::unique_lock<std::mutex> vl(mutex_, std::defer_lock);
 
     // Start main loop timer
-    loop_timer.StartCollection();
+    loop_timer->StartCollection();
 
     // Run each Lifeform's Dna and get its resulting action.  These actions
     // make no change to the arena and will be resolved later in the loop
@@ -73,7 +68,7 @@ void EvolEngine::Run() {
     SplitFatLifeforms();
 
     // Blast a lifeform off into outer space!  (Actually another engine)
-    if (Params::kLifeformAsteroidLaunchInterval != 0 && turns_ % Params::kLifeformAsteroidLaunchInterval == 0) {
+    if (asteroid_ && Params::kLifeformAsteroidLaunchInterval != 0 && turns_ % Params::kLifeformAsteroidLaunchInterval == 0) {
       auto lf = arena_->RemoveRandomLifeform();
       if (lf) {
         asteroid_->LaunchLifeform(lf);
@@ -81,7 +76,7 @@ void EvolEngine::Run() {
     }
 
     // Get a lifeform from outer space!  (Actually another engine)
-    if (Params::kLifeformAsteroidLandInterval != 0 && turns_ % Params::kLifeformAsteroidLandInterval == 0) {
+    if (asteroid_ && Params::kLifeformAsteroidLandInterval != 0 && turns_ % Params::kLifeformAsteroidLandInterval == 0) {
       auto lf = asteroid_->LandLifeform();
       if (lf) {
         Coord c(arena_->GetRandomCoordOnArena());
@@ -90,12 +85,16 @@ void EvolEngine::Run() {
     }
 
     // End main loop timer
-    loop_timer.EndCollection();
+    loop_timer->EndCollection();
     ++turns_;
+    vl.unlock();
   }
 
-  // Clear out the timer export before they fall out of scope
-  timers_.clear();
+  {
+    // Lock block
+    std::lock_guard<std::mutex> lg(mutex_);
+    timers_.clear();
+  }
 }
 
 

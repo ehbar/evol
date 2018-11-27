@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "Coord.h"
+#include "Random.h"
 #include "Types.h"
 
 namespace evol {
@@ -30,32 +31,24 @@ typedef std::shared_ptr<LifeformImpl> Lifeform;
 /**
  * Convenience function returns a new lifeform.
  */
-inline Lifeform make_lifeform(uint64_t gen = 0, Dna dna = Dna{}) {
-  return std::make_shared<LifeformImpl>(gen, dna);
+inline Lifeform make_lifeform(uint64_t gen, Dna dna, std::shared_ptr<Random> random) {
+  return std::make_shared<LifeformImpl>(gen, dna, random);
 }
 
 
 class LifeformImpl {
  public:
-  LifeformImpl() {}
-
+  // Must have thread-local random number generator
+  LifeformImpl() = delete;
   LifeformImpl(const Lifeform &o) = delete;
 
-  LifeformImpl(LifeformImpl && o)
-      : id_(o.id_),
-        gen_(o.gen_),
-        alive_(o.alive_),
-        energy_(o.energy_),
-        coord_(o.coord_),
-        dna_(o.dna_) {
-    o.id_ = 0;
-  }
-
-  LifeformImpl(uint64_t gen, const Dna & dna)
+  LifeformImpl(uint64_t gen, const Dna & dna, std::shared_ptr<Random> random)
       : gen_(gen),
         alive_(true),
         energy_(1.0),
-        dna_(dna) {
+        coord_(),
+        dna_(dna),
+        random_(random) {
     id_ = ++LifeformImpl::next_id_;
   }
 
@@ -66,6 +59,7 @@ class LifeformImpl {
     energy_ = o.energy_;
     coord_ = o.coord_;
     dna_ = o.dna_;
+    random_ = o.random_;
     return *this;
   }
 
@@ -80,7 +74,7 @@ class LifeformImpl {
    * Return a new lifeform with Dna equal to the current instance.
    */
   Lifeform MakeChild() const {
-    return std::make_shared<LifeformImpl>(gen_ + 1, dna_);
+    return std::make_shared<LifeformImpl>(gen_ + 1, dna_, random_);
   }
 
   /**
@@ -93,7 +87,7 @@ class LifeformImpl {
    * Return the ActionType selected by the lifeform's Dna code for its current
    * situation.  This is the method that actually executes the Dna.  Its
    * only argument is a pointer to the Arena.
-   *
+   * 
    * TODO: This is a void * because we can't include Arena.h due to circular
    * deps.  We should fix this.  Might be sane to move DNA processing to its
    * own class, some kind of lifeform VM maybe.
@@ -146,6 +140,7 @@ class LifeformImpl {
   float energy_;
   Coord coord_;
   Dna dna_;
+  std::shared_ptr<Random> random_;
 };
 
 
