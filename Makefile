@@ -31,10 +31,10 @@ LIB=libevol.a
 default: opt
 
 opt: CPPFLAGS += -O3
-opt: clean $(BIN)
+opt: $(BIN)
 
 dbg: CPPFLAGS += -DDEBUG=1 -g
-dbg: clean bin
+dbg: $(BIN)
 
 $(BIN): $(LIB) .depend
 	$(CXX) $(CPPFLAGS) Main.cc -o $(BIN) $(LDFLAGS)

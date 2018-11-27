@@ -172,7 +172,7 @@ void CursesRenderer::RenderFrame(const Timer * poll_timer) {
     ++engine_num;
   }
   auto num_engines = engines_->size();
-  snprintf(out, sizeof(out), "Avg loop time: %llu ms",
+  snprintf(out, sizeof(out), "Avg loop time: %llu 1e-6s",
            static_cast<long long unsigned>(loop_time_sum / num_engines));
   mvaddstr(line, 0, out);
   snprintf(out, sizeof(out), "Total performance: %llu/sec (excl. overhead)",

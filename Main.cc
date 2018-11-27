@@ -8,7 +8,7 @@
  */
 
 #include <unistd.h>
-#include <cstdio>
+#include <iostream>
 #include <vector>
 #include <thread>
 
@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
 #if EVOL_RENDERER_CURSES || EVOL_RENDERER_SFML
   renderer.Cleanup();
 #endif
-  puts("Exiting normally");
+  std::cout << "Exiting normally\n";
 
   return 0;
 }
