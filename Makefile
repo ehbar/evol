@@ -4,20 +4,20 @@
 # This program is distributed under the terms of the GNU General Public
 # License Version 3.  See file `COPYING' for details.
 
-CPPFLAGS=-I/usr/local/include -std=c++17 -Wall -Wextra -Werror -Wno-unused-parameter -g
+CPPFLAGS=-I/usr/local/include -std=c++17 -Wall -Wextra -Werror -Wno-unused-parameter
 
 SRCS=Arena.cc Coord.cc EvolEngine.cc Dumper.cc Lifeform.cc Main.cc Types.cc
 LDFLAGS=-L. -levol -ljson-c -lpthread
 
 # Uncomment for SFML renderer
-#LDFLAGS += -lsfml-window -lsfml-graphics -lsfml-system
-#CPPFLAGS += -DEVOL_RENDERER_SFML=1
-#SRCS += SFMLRenderer.cc
+LDFLAGS += -lsfml-window -lsfml-graphics -lsfml-system
+CPPFLAGS += -DEVOL_RENDERER_SFML=1
+SRCS += SFMLRenderer.cc
 
 # Uncomment for Curses renderer
-LDFLAGS += -ltinfo -lncurses
-CPPFLAGS += -DEVOL_RENDERER_CURSES
-SRCS += CursesRenderer.cc
+#LDFLAGS += -ltinfo -lncurses
+#CPPFLAGS += -DEVOL_RENDERER_CURSES
+#SRCS += CursesRenderer.cc
 
 CXX=g++
 LIBOBJS=$(filter-out Main.o,$(SRCS:.cc=.o))
@@ -30,7 +30,7 @@ LIB=libevol.a
 
 default: opt
 
-opt: CPPFLAGS += -O3
+opt: CPPFLAGS += -O3 -ggdb
 opt: $(BIN)
 
 dbg: CPPFLAGS += -O1 -DDEBUG=1 -ggdb -fsanitize=thread -fsanitize=undefined
